@@ -30,13 +30,13 @@ checkpoint:
     - topic: "role model"
       decision: "flat — one user type, full data isolation, no admin role in the MVP"
     - topic: "MVP first flow"
-      decision: "login → paste text → AI generation → accept/reject each proposal → save to deck → review session"
+      decision: "login → paste text → AI generation → review (all proposals accepted by default, edit/reject any) → save to deck → review session"
     - topic: "timeline"
       decision: "3 weeks of after-hours work, the entire flow including the review session; no hard deadline"
     - topic: "primary success metric"
-      decision: "both numbers from idea-notes are Primary — 75% acceptance of AI flashcards AND 75% of the deck created via AI (generation quality and actually relying on it are two different things)"
+      decision: "both numbers from idea-notes are Primary — 75% of AI flashcards accepted without modification AND 75% of the deck created via AI (generation quality and actually relying on it are two different things)"
     - topic: "guardrails"
-      decision: "(1) no AI flashcard is saved without the user's consent; (2) reliability of the review session — no losing progress and no showing the wrong flashcard"
+      decision: "(1) no AI flashcard is saved until the user completes the review step and explicitly saves — no silent/background auto-save; (2) reliability of the review session — no losing progress and no showing the wrong flashcard"
   frs_drafted: 12
   quality_check_status: accepted
 ---
@@ -85,7 +85,7 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 ### Primary
 
 - The full flow works end-to-end: from pasted text to a started review session within a single user session.
-- 75% of AI-generated flashcards are accepted by the user.
+- 75% of AI-generated flashcards are accepted by the user without modification.
 - 75% of all the user's flashcards are created with the help of AI.
 
 > Both numbers are Primary by design: the acceptance rate measures generation quality, the AI share of the deck measures actual reliance on it. High acceptance with a low share would mean AI generates good flashcards that no one reaches for.
@@ -96,7 +96,7 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 ### Guardrails
 
-- No AI-generated flashcard goes into the deck without the user's explicit consent. The review step is non-removable — no auto-save and no silent background acceptance. Trust in the deck's contents is the foundation of learning.
+- No AI-generated flashcard is saved to the deck until the user completes the review step and explicitly triggers the save. Proposals are accepted by default and shown for review, but nothing is written to the deck silently or in the background — the user always sees the cards and confirms the save. The review step is non-removable. Trust in the deck's contents is the foundation of learning.
 - The review session is reliable: it never loses progress and never shows the wrong flashcard. Faulty review behavior destroys trust in the entire tool, even if generation works flawlessly.
 
 ## Functional Requirements
@@ -114,12 +114,12 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 - FR-004: The user can paste source text and request the generation of flashcard proposals from it via AI. Priority: must-have
   > Socrates: counterargument considered (no upper length limit = AI cost and weaker quality). Resolution: kept; the question of a length limit for pasted text moved to Open Questions.
-- FR-005: The user can review each generated proposal and accept or reject it. Priority: must-have
-  > Socrates: counterargument considered (one-by-one review is tedious for large decks). Resolution: kept — per-flashcard review realizes the "nothing without consent" guardrail.
-- FR-006: The user can edit the content of an AI proposal before accepting it. Priority: must-have
-  > Socrates: counterargument considered (UI cost / blurs the acceptance metric). Resolution: kept — editing rescues "almost good" proposals. Whether a heavily edited proposal counts toward the 75% AI acceptance rate — to Open Questions.
-- FR-007: Accepted proposals go into the user's deck; rejected ones are not saved to the deck. Priority: must-have
-  > Socrates: counterargument accepted — completely discarding rejected proposals removes the data needed to compute the acceptance rate from Primary (75%). Resolution: the product rule is kept (rejected ones don't go into the deck), but it remains open whether the fact of a rejection is logged in aggregate/anonymously to measure the metric — moved to Open Questions.
+- FR-005: The user can review the generated proposals in a list where all are accepted by default, and reject any before saving. Priority: must-have
+  > Socrates: counterargument considered (requiring an explicit accept per card recreates the time-sink for large batches). Resolution: revised to opt-out — all proposals are accepted by default; the user scans and rejects only the bad ones, then saves. Low friction, while the mandatory review + explicit save still realize the consent guardrail at the batch level.
+- FR-006: The user can edit the content of an AI proposal before saving it. Priority: must-have
+  > Socrates: counterargument considered (UI cost / blurs the acceptance metric). Resolution: kept — editing rescues "almost good" proposals. Since the acceptance metric now counts only cards saved without modification, an edited proposal does not count as a clean AI acceptance (see Open Questions).
+- FR-007: On save, all proposals the user did not reject are written to the user's deck; rejected proposals are not saved. Nothing is written to the deck without the user's explicit save. Priority: must-have
+  > Socrates: counterargument accepted — completely discarding rejected proposals removes the data needed to compute the acceptance rate from Primary (75%). Resolution: the product rule is kept (rejected proposals don't go into the deck), but it remains open whether the fact of a rejection is logged in aggregate/anonymously to measure the metric — moved to Open Questions.
 
 ### Flashcard management
 
@@ -143,12 +143,12 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 - **Given** a logged-in user is on the flashcard-generation screen
 - **When** they paste text and request flashcard generation
-- **Then** they see a list of proposals (the set of generated flashcards), each of which they can accept, reject, or edit, and the accepted cards appear in their collection, ready for SR reviews
+- **Then** they see a list of proposals (the set of generated flashcards), each accepted by default and each of which they can edit or reject before saving, and the saved cards appear in their collection, ready for SR reviews
 
 #### Acceptance criteria
 - Generated flashcards have a clear question (front) and answer (back)
 - The user can scan the list and optionally edit or reject individual cards
-- No proposal goes into the deck without the user's explicit acceptance.
+- All proposals are accepted by default; the user rejects the bad ones and no proposal is written to the deck until the user confirms the save (nothing is auto-saved silently).
 - Accepted cards are immediately available in the user's collection.
 - Rejected cards are removed without a trace.
 
@@ -166,7 +166,7 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 ## Non-Functional Requirements
 
-- **Consent before save (from guardrail).** No AI-generated flashcard goes into the deck without the user's explicit acceptance; there is no silent auto-save path.
+- **Consent before save (from guardrail).** No AI-generated flashcard is written to the deck until the user completes the review and explicitly saves; there is no silent or background auto-save path (proposals may be accepted by default in the UI, but the save is always user-triggered).
 - **Review session reliability (from guardrail).** The review session never loses saved progress and never presents a deleted flashcard or one that doesn't belong to the user.
 - **Responsiveness and visible progress.** The user gets confirmation of an action in under 200 ms, and for any operation lasting longer than 2 s they see a continuous progress signal. The full set of proposals from generation typically appears within ~20 s.
 The user sees continuous, visible progress during AI flashcard generation; generating flashcards from a typical article finishes in a time that doesn't discourage the user from abandoning the process.
@@ -182,7 +182,7 @@ In other words, 10xCards determines which knowledge is worth extracting from the
 
 These are two separate domain rules, not one:
 
-- **Rule 1 — extraction and transformation.** The AI generation rule processes raw source text (pasted by the user) and produces a set of question-and-answer pairs on flashcards. Input: raw text pasted by the user (article, notes, documentation). Output: a set of flashcard proposals, each a question–answer pair representing one concept worth remembering. Domain decision: which fragments of the text are worth remembering and how to break them into atomic Q–A pairs. The user experiences this rule while realizing US-01: they paste text, receive cards they didn't have to write themselves, and approve, edit, or reject each proposal.
+- **Rule 1 — extraction and transformation.** The AI generation rule processes raw source text (pasted by the user) and produces a set of question-and-answer pairs on flashcards. Input: raw text pasted by the user (article, notes, documentation). Output: a set of flashcard proposals, each a question–answer pair representing one concept worth remembering. Domain decision: which fragments of the text are worth remembering and how to break them into atomic Q–A pairs. The user experiences this rule while realizing US-01: they paste text, receive cards they didn't have to write themselves, review the batch — editing or rejecting any — and save the rest.
 - **Rule 2 — review schedule.** The SR scheduling rule lays out a review schedule for the flashcards that made it into the user's deck. The algorithm picks the next review date for each card based on its results from previous sessions. Input: the user's deck of flashcards and the history of their grades from previous reviews. Output: the set of flashcards to practice now and the moment of the next review for each of them. Domain decision: when a given flashcard should come back so that the review hits the moment optimal for retention. The user experiences this rule by starting a review session (US-02): open the app, see today's cards, never plan your own learning schedule yourself.
 
 The boundary between the rules is where they meet: Rule 1 fills the deck, Rule 2 manages the learning on that deck. A flashcard created manually (FR-008) skips Rule 1 but is subject to Rule 2 on equal footing with AI flashcards.
@@ -214,5 +214,5 @@ Non-functional:
 
 1. **Pasted text length limit** — is there an upper character limit for FR-004 (AI cost and generation quality)? Owner: user / downstream decision.
 2. **Measuring the AI acceptance rate** — is the fact of a proposal rejection (FR-007) logged in aggregate/anonymously so that the "75% acceptance" metric from Primary can be computed, even though rejected ones don't go into the deck? Owner: user.
-3. **Edited proposal vs. the metric** — does a heavily edited AI proposal (FR-006) count toward "75% of the deck via AI"? Where is the threshold between "AI acceptance" and a "manual flashcard"? Owner: user.
+3. **Edited proposal vs. the metric** — the acceptance-rate metric now counts only cards accepted *without modification*, so a heavily edited proposal is not a clean AI acceptance. Still open: does an edited-then-saved proposal (FR-006) still count toward "75% of the deck created via AI" (the deck-share metric)? Where is the threshold between "AI-assisted" and "manual"? Owner: user.
 4. **Flashcard edit vs. review history** — when editing a saved flashcard (FR-010), is the grade history preserved or reset? Owner: downstream decision (depends on the chosen SRS algorithm).

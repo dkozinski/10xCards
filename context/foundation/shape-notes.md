@@ -30,13 +30,13 @@ checkpoint:
     - topic: "role model"
       decision: "płaski — jeden typ użytkownika, pełna izolacja danych, brak roli admina w MVP"
     - topic: "MVP first flow"
-      decision: "logowanie → wklejenie tekstu → generowanie AI → akceptacja/odrzucenie każdej propozycji → zapis do talii → sesja powtórek"
+      decision: "logowanie → wklejenie tekstu → generowanie AI → recenzja (wszystkie propozycje domyślnie zaakceptowane, edycja/odrzucenie dowolnej) → zapis do talii → sesja powtórek"
     - topic: "timeline"
       decision: "3 tygodnie pracy po godzinach, cały przepływ włącznie z sesją powtórek; bez twardego deadline'u"
     - topic: "primary success metric"
-      decision: "obie liczby z idea-notes są Primary — 75% akceptacji fiszek AI ORAZ 75% talii tworzone przez AI (jakość generowania i realne poleganie na nim to dwie różne rzeczy)"
+      decision: "obie liczby z idea-notes są Primary — 75% fiszek AI zaakceptowanych bez modyfikacji ORAZ 75% talii tworzone przez AI (jakość generowania i realne poleganie na nim to dwie różne rzeczy)"
     - topic: "guardrails"
-      decision: "(1) brak zapisu fiszki AI bez zgody użytkownika; (2) niezawodność sesji powtórek — bez gubienia postępów i bez pokazywania złej fiszki"
+      decision: "(1) żadna fiszka AI nie jest zapisana, dopóki użytkownik nie ukończy recenzji i nie zapisze jej jawnie — bez cichego auto-zapisu w tle; (2) niezawodność sesji powtórek — bez gubienia postępów i bez pokazywania złej fiszki"
   frs_drafted: 12
   quality_check_status: accepted
 ---
@@ -85,7 +85,7 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 ### Primary
 
 - Pełny przepływ działa end-to-end: od wklejonego tekstu do rozpoczętej sesji powtórek w jednej sesji użytkownika.
-- 75% fiszek wygenerowanych przez AI jest akceptowanych przez użytkownika.
+- 75% fiszek wygenerowanych przez AI jest akceptowanych przez użytkownika bez modyfikacji.
 - 75% wszystkich fiszek użytkownika powstaje z wykorzystaniem AI.
 
 > Obie liczby są Primary świadomie: wskaźnik akceptacji mierzy jakość generowania, udział AI w talii mierzy realne poleganie na nim. Wysoka akceptacja przy niskim udziale oznaczałaby, że AI generuje dobre fiszki, po które nikt nie sięga.
@@ -96,7 +96,7 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 
 ### Guardrails
 
-- Żadna fiszka wygenerowana przez AI nie trafia do talii bez wyraźnej zgody użytkownika. Krok recenzji jest nieusuwalny — bez auto-zapisu i bez cichej akceptacji w tle. Zaufanie do zawartości talii jest fundamentem nauki.
+- Żadna fiszka wygenerowana przez AI nie trafia do talii, dopóki użytkownik nie ukończy kroku recenzji i sam nie wyzwoli zapisu. Propozycje są domyślnie zaakceptowane i pokazane do recenzji, ale nic nie jest zapisywane po cichu ani w tle — użytkownik zawsze widzi karty i potwierdza zapis. Krok recenzji jest nieusuwalny. Zaufanie do zawartości talii jest fundamentem nauki.
 - Sesja powtórek jest niezawodna: nigdy nie gubi postępów i nigdy nie pokazuje złej fiszki. Wadliwe działanie powtórek niszczy zaufanie do całego narzędzia, nawet jeśli generowanie działa bez zarzutu.
 
 ## Functional Requirements
@@ -114,11 +114,11 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 
 - FR-004: Użytkownik może wkleić tekst źródłowy i zlecić wygenerowanie z niego propozycji fiszek przez AI. Priority: must-have
   > Socrates: rozważony kontrargument (brak górnego limitu długości = koszt AI i słabsza jakość). Rozstrzygnięcie: utrzymany; kwestia limitu długości wklejanego tekstu przeniesiona do Open Questions.
-- FR-005: Użytkownik może przejrzeć każdą wygenerowaną propozycję i ją zaakceptować lub odrzucić. Priority: must-have
-  > Socrates: rozważony kontrargument (recenzja jeden-po-jednym mozolna przy dużych taliach). Rozstrzygnięcie: utrzymany — recenzja per-fiszka realizuje guardrail „nic bez zgody”.
-- FR-006: Użytkownik może edytować treść propozycji AI przed jej akceptacją. Priority: must-have
-  > Socrates: rozważony kontrargument (koszt UI / zaciera metrykę akceptacji). Rozstrzygnięcie: utrzymany — edycja ratuje „prawie dobre” propozycje. Definicja, czy mocno edytowana propozycja liczy się do wskaźnika 75% akceptacji AI — do Open Questions.
-- FR-007: Zaakceptowane propozycje trafiają do talii użytkownika; odrzucone nie są zapisywane do talii. Priority: must-have
+- FR-005: Użytkownik może przejrzeć wygenerowane propozycje na liście, gdzie wszystkie są domyślnie zaakceptowane, i odrzucić dowolne przed zapisem. Priority: must-have
+  > Socrates: rozważony kontrargument (wymóg jawnej akceptacji każdej karty odtwarza stratę czasu przy dużych partiach). Rozstrzygnięcie: zmieniony na opt-out — wszystkie propozycje są domyślnie zaakceptowane; użytkownik skanuje i odrzuca tylko złe, po czym zapisuje. Niskie tarcie, a obowiązkowa recenzja + jawny zapis nadal realizują guardrail zgody na poziomie partii.
+- FR-006: Użytkownik może edytować treść propozycji AI przed jej zapisem. Priority: must-have
+  > Socrates: rozważony kontrargument (koszt UI / zaciera metrykę akceptacji). Rozstrzygnięcie: utrzymany — edycja ratuje „prawie dobre” propozycje. Skoro metryka akceptacji liczy teraz tylko karty zapisane bez modyfikacji, edytowana propozycja nie liczy się jako czysta akceptacja AI (patrz Open Questions).
+- FR-007: Przy zapisie wszystkie propozycje, których użytkownik nie odrzucił, trafiają do talii; odrzucone nie są zapisywane. Nic nie trafia do talii bez jawnego zapisu przez użytkownika. Priority: must-have
   > Socrates: przyjęty kontrargument — całkowite kasowanie odrzuconych pozbawia danych potrzebnych do policzenia wskaźnika akceptacji z Primary (75%). Rozstrzygnięcie: reguła produktowa utrzymana (odrzucone nie trafiają do talii), ale otwarte pozostaje, czy fakt odrzucenia jest logowany zbiorczo/anonimowo do pomiaru metryki — przeniesione do Open Questions.
 
 ### Zarządzanie fiszkami
@@ -143,12 +143,12 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 
 - **Given** zalogowany użytkownik jest na ekranie generowania fiszek
 - **When** wkleja tekst i zleca wygenerowanie fiszek
-- **Then** widzi listę propozycji (zestaw wygenerowanych fiszek), z których każdą może zaakceptować, odrzucić lub edytować, a zaakceptowane karty pojawiają się w jego kolekcji, gotowe do powtórek SR
+- **Then** widzi listę propozycji (zestaw wygenerowanych fiszek), gdzie każda jest domyślnie zaakceptowana i którą może edytować lub odrzucić przed zapisem, a zapisane karty pojawiają się w jego kolekcji, gotowe do powtórek SR
 
 #### Kryteria akceptacji
 - Wygenerowane fiszki mają jasne pytanie (przód) i odpowiedź (tył)
 - Użytkownik może przeskanować listę i opcjonalnie edytować lub odrzucić poszczególne karty
-- Żadna propozycja nie trafia do talii bez jawnej akceptacji użytkownika.
+- Wszystkie propozycje są domyślnie zaakceptowane; użytkownik odrzuca złe i żadna propozycja nie trafia do talii, dopóki nie potwierdzi zapisu (nic nie jest zapisywane po cichu).
 - Zaakceptowane karty są natychmiast dostępne w kolekcji użytkownika.
 - Odrzucone karty są usuwane bez śladu.
 
@@ -166,7 +166,7 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 
 ## Non-Functional Requirements
 
-- **Zgoda przed zapisem (z guardrail).** Żadna fiszka wygenerowana przez AI nie trafia do talii bez jawnej akceptacji użytkownika; nie istnieje ścieżka cichego auto-zapisu.
+- **Zgoda przed zapisem (z guardrail).** Żadna fiszka wygenerowana przez AI nie trafia do talii, dopóki użytkownik nie ukończy recenzji i jawnie nie zapisze; nie istnieje ścieżka cichego auto-zapisu ani zapisu w tle (propozycje mogą być domyślnie zaakceptowane w UI, ale zapis zawsze wyzwala użytkownik).
 - **Niezawodność sesji powtórek (z guardrail).** Sesja powtórek nigdy nie gubi zapisanego postępu i nigdy nie prezentuje fiszki usuniętej ani nienależącej do użytkownika.
 - **Reakcja i widoczny postęp.** Użytkownik dostaje potwierdzenie akcji w czasie poniżej 200 ms, a dla każdej operacji trwającej dłużej niż 2 s widzi ciągły sygnał postępu. Komplet propozycji z generowania pojawia się zwykle w czasie do ~20 s.
 Użytkownik widzi ciągły, widoczny postęp podczas generowania fiszek przez AI; wygenerowanie fiszek z typowego artykułu kończy się w czasie, który nie zniechęca użytkownika do przerwania procesu.
@@ -182,7 +182,7 @@ Innymi słowy, 10xCards określa, jaką wiedzę warto wyciągnąć z tekstu źr�
 
 To dwie osobne reguły domenowe, nie jedna:
 
-- **Reguła 1 — ekstrakcja i przekształcenie.** Reguła generowania AI przetwarza surowy tekst źródłowy (wklejony przez użytkownika) i produkuje zestaw par pytań i odpowiedzi na fiszkach. Wejście: surowy tekst wklejony przez użytkownika (artykuł, notatki, dokumentacja). Wyjście: zbiór propozycji fiszek, każda jako para pytanie–odpowiedź reprezentująca jedno pojęcie warte zapamiętania. Decyzja domenowa: które fragmenty tekstu są warte zapamiętania i jak rozbić je na atomowe pary Q–A. Użytkownik doświadcza tej reguły realizując US-01: wkleja tekst, otrzymaju karty, których nie musiał sam pisać, zatwierdza, edytuje lub odrzuca każdą propozycję.
+- **Reguła 1 — ekstrakcja i przekształcenie.** Reguła generowania AI przetwarza surowy tekst źródłowy (wklejony przez użytkownika) i produkuje zestaw par pytań i odpowiedzi na fiszkach. Wejście: surowy tekst wklejony przez użytkownika (artykuł, notatki, dokumentacja). Wyjście: zbiór propozycji fiszek, każda jako para pytanie–odpowiedź reprezentująca jedno pojęcie warte zapamiętania. Decyzja domenowa: które fragmenty tekstu są warte zapamiętania i jak rozbić je na atomowe pary Q–A. Użytkownik doświadcza tej reguły realizując US-01: wkleja tekst, otrzymuje karty, których nie musiał sam pisać, przegląda partię — edytując lub odrzucając dowolne — i zapisuje resztę.
 - **Reguła 2 — harmonogram powtórek.** Reguła harmonogramowania SR układa harmonogram powtórek dla fiszek, które trafiły do talii użytkownika. Algorytm dobiera termin następnej powtórki dla każdej karty na podstawie jego wyników z poprzednich sesji. Wejście: talia fiszek użytkownika oraz historia jego ocen z poprzednich powtórek. Wyjście: zestaw fiszek do przećwiczenia teraz i moment kolejnej powtórki dla każdej z nich. Decyzja domenowa: kiedy dana fiszka powinna wrócić, żeby powtórka trafiła w moment optymalny dla zapamiętania. Użytkownik doświadcza teje reguły rozpoczynając sesję powtórek (US-02): otwórz aplikację, zobacz dzisiejsze karty, nigdy sam nie planuj własnego harmonogramu nauki
 
 Granica między regułami jest miejscem styku: Reguła 1 wypełnia talię, Reguła 2 zarządza nauką na tej talii. Fiszka utworzona ręcznie (FR-008) pomija Regułę 1, ale podlega Regule 2 na równi z fiszkami z AI.
@@ -214,5 +214,5 @@ Niefunkcjonalne:
 
 1. **Limit długości wklejanego tekstu** — czy istnieje górny limit znaków dla FR-004 (koszt AI i jakość generowania)? Owner: użytkownik / decyzja downstream.
 2. **Pomiar wskaźnika akceptacji AI** — czy fakt odrzucenia propozycji (FR-007) jest logowany zbiorczo/anonimowo, żeby dało się policzyć metrykę „75% akceptacji” z Primary, mimo że odrzucone nie trafiają do talii? Owner: użytkownik.
-3. **Edytowana propozycja a metryka** — czy mocno edytowana propozycja AI (FR-006) liczy się do „75% talii przez AI”? Gdzie próg między „akceptacją AI” a „fiszką ręczną”? Owner: użytkownik.
+3. **Edytowana propozycja a metryka** — metryka akceptacji liczy teraz tylko karty zaakceptowane *bez modyfikacji*, więc mocno edytowana propozycja nie jest czystą akceptacją AI. Nadal otwarte: czy edytowana-i-zapisana propozycja (FR-006) liczy się do „75% talii tworzonej przez AI” (metryka udziału w talii)? Gdzie próg między „wspomaganą przez AI” a „ręczną”? Owner: użytkownik.
 4. **Edycja fiszki a historia powtórek** — przy edycji zapisanej fiszki (FR-010) historia ocen jest zachowywana czy resetowana? Owner: decyzja downstream (zależna od wybranego algorytmu SRS).
