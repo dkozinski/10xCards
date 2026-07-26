@@ -47,7 +47,7 @@ Seed source: `idea-notes.md` (loaded in full at the start of the session).
 
 ## Vision & Problem Statement
 
-Manually creating high-quality educational flashcards is a tedious and time-consuming process, which kills the motivation to tap into the potential of the spaced repetition learning method right from the start. Professionals absorbing material and preparing for difficult exams or industry certifications (IT, medicine, law, finance) are aware that freshly absorbed text (e.g., technical documentation, a scientific article, a textbook chapter) needs to be consolidated. They know that one of the more effective methods of consolidating this knowledge is precisely the spaced repetition method. They know they should turn it into flashcards so the knowledge sticks, but creating them by hand is an overwhelming and labor-intensive task. The barrier to entry, the effort needed to create a satisfying set of flashcards, is so high that they give up on spaced repetition, even though the method works. After a full day of work, manually rewriting the material is simply overwhelming. They study after hours, so time is their most precious resource.
+Manually creating high-quality educational flashcards is a tedious and time-consuming process, which kills the motivation before spaced repetition can even start. Professionals who consume learning material and prepare for difficult exams or industry certifications (IT, medicine, law, finance) are aware that freshly absorbed text (e.g., technical documentation, a scientific article, a textbook chapter) needs to be consolidated. They know that one of the more effective methods of consolidating this knowledge is precisely the spaced repetition method. They know they should turn it into flashcards so the knowledge sticks, but creating them by hand is an overwhelming and labor-intensive task. The barrier to entry, the effort needed to create a satisfying set of flashcards, is so high that they give up on spaced repetition, even though the method works. After a full day of work, manually rewriting the material is simply overwhelming. They study after hours, so time is their most precious resource.
 As a result, they abandon spaced-repetition reviews entirely, even though the method works; the material is not consolidated, and the related knowledge — if not regularly reviewed — is forgotten fairly quickly. The upshot is that the effectiveness of their learning is far lower than it could be, and the most effective tool for consolidating knowledge, spaced repetition, remains unused.
 
 Existing SRS solutions such as Anki are powerful tools for reviews spread over time (spaced repetition), but the flashcard-creation stage in them is entirely manual. The bottleneck is not the review algorithm, but the path from raw text to a finished deck — a set of flashcards to review.
@@ -62,7 +62,7 @@ Pain category: **friction in the workflow** — mechanical, repetitive work that
 
 - Context: studying after hours, alongside a professional job.
 - Input material: documentation, industry material, articles — text that can be copied.
-- Moment of reaching for the product: right after reading a batch of material, when the content is fresh and there's no energy left for an hour of manual work.
+- Moment of reaching for the product: right after reading a batch of material, when the content is fresh, and there's no energy left for an hour of manual work.
 - Motivation: knows and values spaced repetition; doesn't need to be convinced of the method, only to have the cost of entry removed.
 
 ## Success Criteria
@@ -112,13 +112,13 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 ### AI flashcard generation
 
-- FR-004: The user can paste source text and request the generation of flashcard proposals from it via AI. Priority: must-have
+- FR-004: The user can paste source text into a generation input and request the generation of flashcard proposals from it via AI. Priority: must-have
   > Socrates: counterargument considered (no upper length limit = AI cost and weaker quality). Resolution: kept; the question of a length limit for pasted text moved to Open Questions.
-- FR-005: The user can review the generated proposals in a list where all are accepted by default, and reject any before saving. Priority: must-have
+- FR-005: The user can review the AI-generated flashcards, which are all accepted by default, and reject any before saving. Priority: must-have
   > Socrates: counterargument considered (requiring an explicit accept per card recreates the time-sink for large batches). Resolution: revised to opt-out — all proposals are accepted by default; the user scans and rejects only the bad ones, then saves. Low friction, while the mandatory review + explicit save still realize the consent guardrail at the batch level.
 - FR-006: The user can edit the content of an AI proposal before saving it. Priority: must-have
   > Socrates: counterargument considered (UI cost / blurs the acceptance metric). Resolution: kept — editing rescues "almost good" proposals. Since the acceptance metric now counts only cards saved without modification, an edited proposal does not count as a clean AI acceptance (see Open Questions).
-- FR-007: On save, all proposals the user did not reject are written to the user's deck; rejected proposals are not saved. Nothing is written to the deck without the user's explicit save. Priority: must-have
+- FR-007: On save, every proposal the user did not reject is added to their deck and rejected ones are discarded — nothing reaches the deck without an explicit save. Priority: must-have
   > Socrates: counterargument accepted — completely discarding rejected proposals removes the data needed to compute the acceptance rate from Primary (75%). Resolution: the product rule is kept (rejected proposals don't go into the deck), but it remains open whether the fact of a rejection is logged in aggregate/anonymously to measure the metric — moved to Open Questions.
 
 ### Flashcard management
