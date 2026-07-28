@@ -139,10 +139,10 @@ Budżet czasu: **3 tygodnie pracy po godzinach** na cały przepływ, bez twardeg
 
 ## User Stories
 
-### US-01: Użytkownik zamienia wklejony tekst na talię fiszek
+### US-01: Użytkownik generuje fiszki z wklejonego tekstu
 
 - **Given** zalogowany użytkownik jest na ekranie generowania fiszek
-- **When** wkleja tekst i zleca wygenerowanie fiszek
+- **When** wkleja tekst i zleca wygenerowanie fiszek przez AI
 - **Then** widzi listę propozycji (zestaw wygenerowanych fiszek), gdzie każda jest domyślnie zaakceptowana i którą może edytować lub odrzucić przed zapisem, a zapisane karty pojawiają się w jego kolekcji, gotowe do powtórek SR
 
 #### Kryteria akceptacji

@@ -114,7 +114,7 @@ Time budget: **3 weeks of after-hours work** for the entire flow, with no hard d
 
 - FR-004: The user can paste source text into a generation input and request the generation of flashcard proposals from it via AI. Priority: must-have
   > Socrates: counterargument considered (no upper length limit = AI cost and weaker quality). Resolution: kept; the question of a length limit for pasted text moved to Open Questions.
-- FR-005: The user can review the AI-generated flashcards, which are all accepted by default and reject, any before saving. Priority: must-have
+- FR-005: The user can review the AI-generated flashcards, which are all accepted by default, and reject any before saving. Priority: must-have
   > Socrates: counterargument considered (requiring an explicit accept per card recreates the time-sink for large batches). Resolution: revised to opt-out — all proposals are accepted by default; the user scans and rejects only the bad ones, then saves. Low friction, while the mandatory review + explicit save still realize the consent guardrail at the batch level.
 - FR-006: The user can edit the content of an AI proposal before saving it. Priority: must-have
   > Socrates: counterargument considered (UI cost / blurs the acceptance metric). Resolution: kept — editing rescues "almost good" proposals. Since the acceptance metric now counts only cards saved without modification, an edited proposal does not count as a clean AI acceptance (see Open Questions).
