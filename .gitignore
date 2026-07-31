@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# Materiały szkoleniowe 10xDevs / @przeprogramowani/10x-cli
+# Pobrane w ramach kursu — zostają lokalnie na dysku, NIE trafiają do repo.
+# ---------------------------------------------------------------------------
+.claude/
+CLAUDE.md
+context/foundation/ref.md
+
+# README-e katalogów context/ scaffoldowane przez /10x-init (tekst autorstwa kursu).
+# Jeśli napiszesz własne wersje, usuń te trzy linie.
+context/foundation/README.md
+context/changes/README.md
+context/archive/README.md
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+.astro/
+.output/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs & caches
+*.log
+npm-debug.log*
+.cache/
+coverage/
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
