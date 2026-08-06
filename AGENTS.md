@@ -10,6 +10,11 @@ This file provides guidance to AI Agent when working with code in this repositor
   `authenticated` roles. Never a single `for all` policy.
 - **API routes must export `const prerender = false`.** Without it the route is
   statically prerendered at build time and silently stops responding.
+- **API error codes are a closed vocabulary.** Input validation returns **400**
+  (never 422) with code `validation_failed`; unparseable JSON → `invalid_json`;
+  missing session → `unauthorized`. Never invent a new code inline.
+- **DTO fields use `snake_case`** (`user_id`, `created_at`) — the shape Postgres
+  returns. Never map to camelCase in services.
 
 ## Rule files — where to write
 
