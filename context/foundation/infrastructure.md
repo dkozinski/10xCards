@@ -2,7 +2,7 @@
 project: 10xCards
 researched_at: 2026-08-07
 recommended_platform: Cloudflare Workers
-runner_up: Railway
+runner_up: Vercel
 context_type: mvp
 tech_stack:
   language: TypeScript
