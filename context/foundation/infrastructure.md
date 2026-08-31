@@ -1,6 +1,7 @@
 ---
 project: 10xCards
 researched_at: 2026-08-07
+verified_at: 2026-08-31
 recommended_platform: Cloudflare Workers
 runner_up: Vercel
 context_type: mvp
@@ -33,6 +34,11 @@ is not a benefit being purchased. And co-located managed services carry zero wei
 Supabase (database + auth) and OpenRouter (AI generation) are both external, so D1, KV,
 R2 and Queues are not part of the value. The platform is being chosen to run one
 Astro SSR application and nothing else.
+
+Nor does it rest on price. Monthly cost and developer experience were weighted roughly
+equally at MVP stage, so no platform was scored up or down on its base tier. The
+practical consequence is that the $5/mo Workers Paid subscription (top entry in the risk
+register) is a straightforward yes rather than a trade-off to agonise over.
 
 The ~20-second OpenRouter generation call — the requirement that most constrains
 platform choice — is the easiest fit on Workers of any platform evaluated: Cloudflare
@@ -179,8 +185,8 @@ a documented fallback with a known migration path, not as a contender.
    them GA, but `@astrojs/cloudflare` v13.0.0 **dropped Pages support outright**. The
    per-PR preview URL — the headline DX feature of this platform category, and GA on
    Vercel, Netlify and Railway — is not available as a first-class feature here.
-   (Partial substitute exists: `wrangler versions upload` produces a version preview
-   URL. See Operational Story.)
+   (Resolved after this cross-check was run: Workers Builds produces a version preview
+   URL on every non-`main` push. See Operational Story and the risk register.)
 3. **Node compatibility fails at runtime, not at build time.** `nodejs_compat` covers a
    real subset natively, but unsupported APIs receive unenv polyfills that throw
    `[unenv] … not implemented yet!` **when executed**. A transitive dependency of an
@@ -200,6 +206,10 @@ a documented fallback with a known migration path, not as a contender.
 
 ### Pre-Mortem — How This Could Fail
 
+_(Recorded 2026-08-07 and deliberately left unedited. One strand — "no preview
+environment, so every diagnostic change is tested in production" — was resolved after
+that date; see Operational Story and the risk register. Every other strand still holds.)_
+
 The team ships on the free plan. Everything works locally, because `astro dev` runs
 workerd without a CPU meter. The first real user pastes a 4,000-word article; the
 proposals screen server-renders thirty cards and trips Error 1102. That one is cheap to
@@ -218,8 +228,8 @@ debugging session opens with "is this our bug, or is this workerd?"
 
 ### Unknown Unknowns
 
-- **Cloudflare acquired Astro on 2026-01-16, and the lock-in is already in the source
-  tree.** `Astro.locals.runtime` was removed in adapter v13 in favor of
+- **Cloudflare acquired Astro on 2026-01-16 (confirmed 2026-08-31), and the lock-in is
+  already in the source tree.** `Astro.locals.runtime` was removed in adapter v13 in favor of
   `import { env } from 'cloudflare:workers'` — a workerd-only module specifier. Once
   that import is in application code, `astro build` against a Node target will not
   compile. Leaving Cloudflare is a refactor, not an adapter swap. The framework's
@@ -243,22 +253,30 @@ debugging session opens with "is this our bug, or is this workerd?"
 
 ## Operational Story
 
-- **Preview deploys**: Per-PR preview deployments on the Workers path are **private
-  beta (checked 2026-08-07)** — do not plan around them. The available substitute is
-  version preview URLs: `npx wrangler versions upload` uploads a version **without**
-  shifting production traffic and returns a preview URL of the form
-  `<version-prefix>-10xcards.<subdomain>.workers.dev`. Promote with
-  `npx wrangler versions deploy`. This works from CI on fork PRs only if the workflow
-  has access to `CLOUDFLARE_API_TOKEN`, which GitHub withholds from fork PRs by
-  default — so fork previews will not work without a `pull_request_target` workflow.
+- **Preview deploys**: Previews come from **Cloudflare Workers Builds**, whose default
+  deploy command for any non-production branch is `wrangler versions upload` — a version
+  uploaded **without** shifting production traffic, returning a preview URL of the form
+  `<version-prefix>-10xcards.<subdomain>.workers.dev`. Every push to a non-`main` branch
+  therefore gets a preview URL, with no workflow to write and no Cloudflare credential in
+  GitHub at all. Promote with `npx wrangler versions deploy`. Per-PR preview
+  _environments_ on the Workers path remain **private beta (checked 2026-08-07)** — do not
+  plan around them; version preview URLs are the substitute.
+  _(Changed 2026-08-31: this bullet previously assumed previews would run from a GitHub
+  Actions workflow holding a `CLOUDFLARE_API_TOKEN`, and warned that fork PRs get none
+  because GitHub withholds secrets from them. Workers Builds pulls from GitHub rather than
+  GitHub pushing to Cloudflare, so both the workflow and the fork caveat are moot.)_
 - **Secrets**: `SUPABASE_URL` and `SUPABASE_KEY` live in Cloudflare's secret store via
   `npx wrangler secret put <NAME>` — write-only, not readable back through the CLI or
-  dashboard once set. Local development reads them from `.dev.vars` (gitignored). CI
-  needs three GitHub repository secrets: `SUPABASE_URL` and `SUPABASE_KEY` (already
-  required for the build step per the existing workflow) plus `CLOUDFLARE_API_TOKEN`
-  for deploys. Rotation is `wrangler secret put` again followed by a redeploy; the
-  OpenRouter key follows the same path once added. Never place secrets in
+  dashboard once set. Local development reads them from `.dev.vars` (gitignored). GitHub
+  holds **no Cloudflare credential at all**: Workers Builds owns the deploy, so
+  `CLOUDFLARE_API_TOKEN` is never created — no long-lived deploy credential sits in the
+  repository to leak or rotate. The two GitHub repository secrets `SUPABASE_URL` and
+  `SUPABASE_KEY` serve only the CI build step, and go unused once CI is trimmed to
+  lint-only (inert either way). Rotation is `wrangler secret put` again followed by a
+  redeploy; the OpenRouter key follows the same path once added. Never place secrets in
   `wrangler.jsonc` `vars` — that file is committed.
+  _(Changed 2026-08-31: this bullet previously called for a third repository secret,
+  `CLOUDFLARE_API_TOKEN`, for deploying from GitHub Actions.)_
 - **Rollback**: `npx wrangler deployments list` to find the target version ID, then
   `npx wrangler rollback <VERSION_ID> --message "reason"`. Time-to-revert is seconds —
   it is a routing change, not a rebuild. **Caveat: this reverts code only.** Supabase
@@ -281,27 +299,34 @@ debugging session opens with "is this our bug, or is this workerd?"
 
 ## Risk Register
 
-| Risk                                                                                                                        | Source                        | Likelihood | Impact | Mitigation                                                                                                                                                                                                                                                                                                                            |
-| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free-tier 10 ms CPU cap trips Error 1102 on the proposals screen under real payloads                                        | Devil's advocate              | **H**      | **H**  | Subscribe to Workers Paid ($5/mo) before any real traffic. Treat the free tier as unusable for this app. Verify by rendering a 4,000-word input against a deployed Worker, not `astro dev` — the dev server enforces no CPU limit.                                                                                                    |
-| Review-session state in eventually-consistent KV violates the "never loses progress / never shows the wrong card" guardrail | Devil's advocate / Pre-mortem | M          | **H**  | Persist all review state (grades, scheduling, queue position) in Supabase Postgres. Do **not** use Astro Sessions for anything the guardrail covers — the auto-provisioned `SESSION` KV binding is eventually consistent up to 60s and capped at 1,000 writes/day on Free. Write the grade transactionally before advancing the card. |
-| unenv Node-compat stub throws `[unenv] … not implemented yet!` at runtime in a transitive dependency                        | Devil's advocate / Pre-mortem | M          | **H**  | Vet SRS and OpenRouter client libraries for workerd compatibility _before_ adopting them — prefer fetch-based, zero-Node-builtin packages. Exercise every new dependency against a deployed preview version (`wrangler versions upload`), never only against `astro dev`.                                                             |
-| No GA per-PR preview environments on the Workers path (private beta) → changes tested in production                         | Devil's advocate / Pre-mortem | **H**      | M      | Use `wrangler versions upload` for a preview URL on every change before `wrangler versions deploy`. Wire it into CI on PRs. Accept that fork PRs get no preview (GitHub withholds secrets from fork workflows).                                                                                                                       |
-| Rollback reverts code but not Supabase migrations or secrets                                                                | Research finding              | M          | **H**  | Keep migrations strictly additive and backward-compatible for one release (expand/contract). Never pair a destructive migration with a code deploy. Confirm a rollback target predates the last schema change before running `wrangler rollback`.                                                                                     |
-| `wrangler deploy` shifts 100% of traffic with no canary                                                                     | Unknown unknowns              | M          | M      | Standardize on the two-step `wrangler versions upload` → `wrangler versions deploy` flow instead of bare `wrangler deploy`. Record it in `AGENTS.md` so agents do not reach for the one-shot command.                                                                                                                                 |
-| Vendor lock-in via `cloudflare:workers` module specifier in application source                                              | Unknown unknowns              | M          | M      | Confine `import { env } from 'cloudflare:workers'` to a single module (`src/lib/env.ts` or the existing `src/lib/supabase.ts`) and import from there everywhere else. Keeps the Render fallback a one-file change rather than a codebase sweep.                                                                                       |
-| Stale documentation: `wrangler pages dev` / `platformProxy` / Pages guides no longer apply to adapter v13                   | Unknown unknowns              | **H**      | L      | Local dev is `npm run dev` (`astro dev`) — workerd runs natively via the embedded `@cloudflare/vite-plugin`. This is already recorded in `AGENTS.md`; reject any suggestion to add a separate `wrangler dev` step.                                                                                                                    |
-| Adapter pinned at 13.5.0 while 13.7.0 is available                                                                          | Research finding              | M          | L      | `npm i @astrojs/cloudflare@^13.7.0`. Stay on 13.x — **v14 requires Astro 7** and will break this project.                                                                                                                                                                                                                             |
-| `astro:env` build-time `vars` resolution bug, fixed only in adapter 14.1.2 (never backported to v13)                        | Research finding              | **L**      | M      | Largely inapplicable here: both vars are declared `access: "secret"` (runtime-resolved) and `wrangler.jsonc` has no `vars` block. Preserve that — keep secrets out of `vars` and out of `envField` `access: "public"`.                                                                                                                |
-| `compatibility_date` bump silently changes runtime behavior                                                                 | Unknown unknowns              | L          | M      | Current `2026-05-08` is safe (floor for SSR + middleware is `2026-02-19`). Treat any change to it as a code change: bump only deliberately, test on a preview version first.                                                                                                                                                          |
-| Cloudflare-side outage or workerd regression with no contractual MVP-tier SLA                                               | Research finding              | L          | M      | Accepted for MVP scope. Render is the documented fallback: swap to `@astrojs/node`, deploy to Frankfurt. Keeping the `cloudflare:workers` import confined (above) is what keeps this a days-not-weeks migration.                                                                                                                      |
-| Every page view is a billed Worker invocation (`output: "server"`) — no static tier                                         | Unknown unknowns              | L          | L      | Non-issue at PRD scale (medium users, low QPS): 10k–100k requests/month sits far inside the 10M included on Paid. Revisit only if traffic grows two orders of magnitude.                                                                                                                                                              |
+| Risk                                                                                                                        | Source                                       | Likelihood                              | Impact | Mitigation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | --------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free-tier 10 ms CPU cap trips Error 1102 on the proposals screen under real payloads                                        | Devil's advocate                             | **H**                                   | **H**  | Subscribe to Workers Paid ($5/mo) before any real traffic. Treat the free tier as unusable for this app. Verify by rendering a 4,000-word input against a deployed Worker, not `astro dev` — the dev server enforces no CPU limit.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Review-session state in eventually-consistent KV violates the "never loses progress / never shows the wrong card" guardrail | Devil's advocate / Pre-mortem                | M                                       | **H**  | Persist all review state (grades, scheduling, queue position) in Supabase Postgres. Do **not** use Astro Sessions for anything the guardrail covers — the auto-provisioned `SESSION` KV binding is eventually consistent up to 60s and capped at 1,000 writes/day on Free. Write the grade transactionally before advancing the card. **Account-side leftover:** KV namespace `736db4b78a574ebf912a5d6f02926b90` already exists on the Cloudflare account (created 2026-08-30) and nothing in `wrangler.jsonc` references it — pin that id rather than letting the adapter auto-provision a second one. Pinning does nothing for consistency; this warning stands either way. |
+| unenv Node-compat stub throws `[unenv] … not implemented yet!` at runtime in a transitive dependency                        | Devil's advocate / Pre-mortem                | M                                       | **H**  | Vet SRS and OpenRouter client libraries for workerd compatibility _before_ adopting them — prefer fetch-based, zero-Node-builtin packages. Exercise every new dependency against a deployed preview version (`wrangler versions upload`), never only against `astro dev`.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| No GA per-PR preview environments on the Workers path (private beta) → changes tested in production                         | Devil's advocate / Pre-mortem                | **L** _(was H — downgraded 2026-08-31)_ | M      | Resolved by the deploy mechanism chosen after this research: Workers Builds defaults every non-production branch to `wrangler versions upload`, so each push to a non-`main` branch produces a version preview URL automatically — no CI wiring, no fork-PR caveat (Cloudflare pulls from GitHub). Not a per-PR _environment_, but it removes the "diagnose in production" failure mode the pre-mortem described. For manual releases, still `versions upload` → verify → `versions deploy`.                                                                                                                                                                                  |
+| Rollback reverts code but not Supabase migrations or secrets                                                                | Research finding                             | M                                       | **H**  | Keep migrations strictly additive and backward-compatible for one release (expand/contract). Never pair a destructive migration with a code deploy. Confirm a rollback target predates the last schema change before running `wrangler rollback`.                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `wrangler deploy` shifts 100% of traffic with no canary                                                                     | Unknown unknowns                             | M                                       | M      | Standardize on the two-step `wrangler versions upload` → `wrangler versions deploy` flow instead of bare `wrangler deploy`. Record it in `AGENTS.md` so agents do not reach for the one-shot command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Vendor lock-in via `cloudflare:workers` module specifier in application source                                              | Unknown unknowns                             | M                                       | M      | Confine `import { env } from 'cloudflare:workers'` to a single module (`src/lib/env.ts` or the existing `src/lib/supabase.ts`) and import from there everywhere else. Keeps the Render fallback a one-file change rather than a codebase sweep.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Stale documentation: `wrangler pages dev` / `platformProxy` / Pages guides no longer apply to adapter v13                   | Unknown unknowns                             | **H**                                   | L      | Local dev is `npm run dev` (`astro dev`) — workerd runs natively via the embedded `@cloudflare/vite-plugin`. This is already recorded in `AGENTS.md`; reject any suggestion to add a separate `wrangler dev` step.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Adapter range widened past 13.x — **v14 requires Astro 7**                                                                  | Research finding                             | L                                       | M      | `package.json` declares `^13.5.0` while 13.7.0 is what resolves — bump the declared range to `^13.7.0` so the installed version is explicit. Never widen to `^14` before Astro is on 7.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `astro:env` build-time `vars` resolution bug, fixed only in adapter 14.1.2 (never backported to v13)                        | Research finding                             | **L**                                   | M      | Largely inapplicable here: both vars are declared `access: "secret"` (runtime-resolved) and `wrangler.jsonc` has no `vars` block. Preserve that — keep secrets out of `vars` and out of `envField` `access: "public"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `compatibility_date` bump silently changes runtime behavior                                                                 | Unknown unknowns                             | L                                       | M      | Current `2026-05-08` is safe (floor for SSR + middleware is `2026-02-19`). Treat any change to it as a code change: bump only deliberately, test on a preview version first.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Cloudflare-side outage or workerd regression with no contractual MVP-tier SLA                                               | Research finding                             | L                                       | M      | Accepted for MVP scope. Render is the documented fallback: swap to `@astrojs/node`, deploy to Frankfurt. Keeping the `cloudflare:workers` import confined (above) is what keeps this a days-not-weeks migration.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Every page view is a billed Worker invocation (`output: "server"`) — no static tier                                         | Unknown unknowns                             | L                                       | L      | Non-issue at PRD scale (medium users, low QPS): 10k–100k requests/month sits far inside the 10M included on Paid. Revisit only if traffic grows two orders of magnitude.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Adapter also injects an unpinned `images: {binding: "IMAGES"}` — Cloudflare Images is a paid product                        | Research finding (build-verified 2026-08-31) | M                                       | M      | The build log states it plainly: _"Enabling image processing with Cloudflare Images ... with the 'IMAGES' Images binding."_ Same mechanism as the SESSION binding, same customizer. Whether a Free-plan deploy is rejected or the binding merely idles until a transform runs is **unverified** — establish it at the first deploy. Two exits: `cloudflare({ imagesBindingName: false })` in `astro.config.mjs`, or declare `images.binding` in `wrangler.jsonc` so `hasImagesBinding` short-circuits the injection.                                                                                                                                                          |
+| Pinning the SESSION KV namespace does **not** cover preview deployments                                                     | Research finding (build-verified 2026-08-31) | M                                       | L      | The adapter's customizer ends with `previews: getNonInheritableBindings(config.previews)` — it re-runs injection against the `previews` sub-config, not the top level. With no `previews` block in `wrangler.jsonc` the generated config carries `"previews": {"kv_namespaces": [{"binding": "SESSION"}]}` with no `id`, so preview deploys can still auto-provision an untracked namespace. Mirror the pin into a `previews` block before relying on `versions upload`.                                                                                                                                                                                                      |
 
 ## Getting Started
 
-Commands validated against this repository's pinned versions (Astro 6.3.1,
-`@astrojs/cloudflare` 13.5.0, wrangler 4.90.0) — **not** against general Cloudflare
-documentation, most of which still describes the superseded Pages workflow.
+Commands validated against this repository's own versions — **not** against general
+Cloudflare documentation, most of which still describes the superseded Pages workflow.
+
+Originally validated 2026-08-07 against Astro 6.3.1, `@astrojs/cloudflare` 13.5.0 and
+wrangler 4.90.0. **Re-checked 2026-08-31** against what is actually installed now —
+Astro 6.4.8, adapter 13.7.0, wrangler 4.118.0 — and every command below still holds. Two
+were additionally exercised for real on that date: `npm run build` (clean) and
+`npx wrangler deployments list`.
 
 1. **Rename the Worker.** `wrangler.jsonc` still carries the starter's identity:
    `"name": "10x-astro-starter"` → `"name": "10xcards"`. This becomes the production
@@ -354,8 +379,9 @@ documentation, most of which still describes the superseded Pages workflow.
 The following were not evaluated in this research:
 
 - Docker image configuration and Dockerfile authoring
-- CI/CD pipeline setup (the existing `.github/workflows/ci.yml` runs lint + build only;
-  wiring the deploy step is downstream work)
+- CI/CD wiring — Workers Builds dashboard configuration and trimming
+  `.github/workflows/ci.yml` to lint-only belong to the deployment plan, not to this
+  research
 - Production-scale architecture — multi-region, HA, disaster recovery, SLA commitments
 - Supabase project sizing, region selection, and backup policy
 - OpenRouter model selection, token budgeting, and cost controls
