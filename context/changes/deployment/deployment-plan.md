@@ -3,7 +3,7 @@ project: 10xCards
 change: deployment
 planned_at: 2026-08-31
 verified_at: 2026-09-06
-status: phase-3-done
+status: phase-4-done
 platform: Cloudflare Workers
 worker_name: 10xcards
 auto_deploy: Cloudflare Workers Builds (no GitHub Actions in the deploy path)
@@ -494,7 +494,7 @@ and unused" is accurate, and it is why the binding cannot simply be dropped.
 - [x] Project confirmed: `xjykknkrkmtcdqvyirtt`, `eu-central-1`. A London (`eu-west-2`)
       project was created by mistake earlier and deleted — do not recreate it.
 - [x] Publishable key collected **and validated** (`HTTP 200`, P3). Nothing more to copy.
-- [ ] **Change the "Confirm sign up" email template** at
+- [x] **Change the "Confirm sign up" email template** at
       https://supabase.com/dashboard/project/xjykknkrkmtcdqvyirtt/auth/templates
 
       The current template is the Supabase default and links via `{{ .ConfirmationURL }}` —
@@ -514,7 +514,7 @@ and unused" is accurate, and it is why the binding cannot simply be dropped.
 
       **Do this only after `/auth/confirm` exists (Phase 1)** — otherwise confirmation links
       point at a 404.
-- [ ] Leave Site URL / Redirect URLs until Phase 4 — the hostname doesn't exist yet.
+- [x] Leave Site URL / Redirect URLs until Phase 4 — the hostname doesn't exist yet.
       **Known gap between here and Phase 4:** `{{ .SiteURL }}` resolves from URL Configuration,
       which still points at the Supabase default (`http://localhost:3000`). So a signup
       completed in that window produces a link to localhost. Harmless — there are no users —
@@ -617,11 +617,11 @@ the gate the plan already recorded.
 
 Setting a secret creates and deploys a new version by itself; no manual redeploy.
 
-- [ ] `npx wrangler secret put SUPABASE_URL --name 10xcards` → `https://xjykknkrkmtcdqvyirtt.supabase.co`
-- [ ] `npx wrangler secret put SUPABASE_KEY --name 10xcards` → the `sb_publishable_…` key
-- [ ] `npx wrangler secret list --name 10xcards` → exactly two, `type: secret_text`.
+- [x] `npx wrangler secret put SUPABASE_URL --name 10xcards` → `https://xjykknkrkmtcdqvyirtt.supabase.co`
+- [x] `npx wrangler secret put SUPABASE_KEY --name 10xcards` → the `sb_publishable_…` key
+- [x] `npx wrangler secret list --name 10xcards` → exactly two, `type: secret_text`.
       Values are write-only — keep your own copy.
-- [ ] Supabase → Auth → URL Configuration:
+- [x] Supabase → Auth → URL Configuration:
       - **Site URL** = `https://10xcards.<subdomain>.workers.dev` (production, never a preview)
       - **Redirect URLs** — three entries, and the production one is **not** optional:
         `https://10xcards.<subdomain>.workers.dev/**`,
@@ -634,15 +634,87 @@ Setting a secret creates and deploys a new version by itself; no manual redeploy
 non-empty; a wrong-project or expired key renders as "configured" and then fails inside
 `getUser()`, and `/dashboard` still redirects to sign-in — identical to "not logged in".
 
-- [ ] Check 13 (`/auth/v1/settings` → 200) proves the key.
-- [ ] Banner gone on `/` — the load-bearing proof that `astro:env/server` secret
+- [x] Check 13 (`/auth/v1/settings` → 200) proves the key.
+- [x] Banner gone on `/` — the load-bearing proof that `astro:env/server` secret
       resolution works on workerd, a path this repo has never exercised in production.
-- [ ] Sign up → confirmation email → click → land **authenticated**.
-- [ ] Sign in → `Set-Cookie` present **on the 302** (check 15).
-- [ ] `/dashboard` renders; sign out clears cookies.
-- [ ] `wrangler tail` clean; read `cpuTime` and record the baseline.
+- [x] Sign up → confirmation email → click → land **authenticated**.
+- [x] Sign in → `Set-Cookie` present **on the 302** (check 15).
+- [x] `/dashboard` renders; sign out clears cookies.
+- [x] `wrangler tail` clean; read `cpuTime` and record the baseline.
 
-**Actuals** *(fill in)*: cpuTime baseline · email-confirmation posture · date
+### Phase 4 — actuals (executed 2026-09-06)
+
+| Check | Result |
+| --- | --- |
+| 12 — secrets set | exactly `SUPABASE_URL` + `SUPABASE_KEY`, both `secret_text` ✅ |
+| 13 — key actually valid | `/auth/v1/settings` → `200` ✅ |
+| 14 — key type | `sb_publishable_` ✅ |
+| 10 — banner **gone** | `0` occurrences ✅ (was `1` before the secrets) |
+| 15 — cookie on the 302 | ✅ — see the note below on how it was established |
+| Auth round-trip | ✅ sign up → e-mail → click → **landed authenticated** → `/dashboard` renders |
+
+Both secrets were set by piping from `.dev.vars`, so no value was ever echoed. Each
+`secret put` created and deployed its own version (`Source: Secret Change`) with no manual
+redeploy — versions `df0e7e0c…` then `c2f46f40…`.
+
+**Presence vs validity, settled empirically (E7).** The banner disappearing only proves the
+vars are non-empty. The proof they are *correct* came from `/auth/confirm?token_hash=deadbeef`:
+before the secrets it answered `Supabase is not configured` — its own guard, no network call —
+and after them it answered `Email link is invalid or has expired`, which is **Supabase's**
+verdict. That 302 is the end-to-end proof that secret → `astro:env` → workerd → Frankfurt
+works on every hop.
+
+**The redirect allowlist was verified without sending a single e-mail.** `GET /auth/v1/verify`
+with a deliberately bogus token honours `redirect_to` only when it matches the allowlist, so
+four probes settle the whole configuration at zero cost against the ~2/hour mail budget (E24):
+
+| `redirect_to` | Result |
+| --- | --- |
+| `…dkozinski.workers.dev/auth/confirm` | 303 → **as requested** — production allowed |
+| `staging-10xcards…/auth/confirm` | 303 → **as requested** — the `*-` glob covers previews |
+| `localhost:4321/auth/confirm` | 303 → **as requested** — dev allowed |
+| `example.com/steal` *(control)* | 303 → **Site URL instead** — correctly refused |
+
+The control row is the one that matters: it proves the list is *enforced*, not merely present.
+Reuse this probe whenever the allowlist changes — it is strictly better than burning a signup.
+
+**Check 15 was established behaviourally, not by curl.** The `curl` form could not be run from
+this session: `read -s` gets no TTY under the harness's `!` execution, so the password arrived
+empty and the endpoint answered `302 …?error=Invalid login credentials` with no cookie — a real
+response, but not the one the check wants. It did confirm two things in passing: the request was
+**not** rejected as `403`, so the mandatory `Origin` header defeats Astro's CSRF guard as
+documented, and `cache-control: private, no-store` is present in production. The check itself is
+satisfied by browser behaviour, which is stronger: a `POST /api/auth/signin` answered `302 → /`,
+the browser followed it, and the home page rendered the user as signed in. That sequence is
+impossible unless `Set-Cookie` rode on the redirect.
+
+**E30 — the confirmation link only works in the browser that started the signup.** The first
+round-trip attempt landed **not** signed in even though `/auth/confirm` took its success branch.
+The retest, run carefully in one browser, succeeded. `@supabase/ssr` defaults to **PKCE**:
+`signUp` stores a code-verifier cookie, and `exchangeCodeForSession` needs it. Open the link in
+another window, a private window, or an e-mail client's built-in preview and the exchange has
+no verifier — the user lands anonymous. Note the shape this produced in the logs, because it is
+the diagnostic: `emailRedirectTo` makes Supabase return **`?code=`**, a query parameter, not the
+`?token_hash=` the Phase 2 template mints. `src/pages/auth/confirm.ts` handles both, which is
+the only reason this worked at all — a `token_hash`-only route would have failed here.
+
+**Measured round-trip (retest, 23:32):**
+
+```
+POST /api/auth/signup      wall 1057 ms  ok
+GET  /auth/confirm-email   wall    3 ms  ok   ← no outbound call = no session yet
+GET  /auth/confirm?code=…  wall   94 ms  ok   ← the exchange
+GET  /                     wall   58 ms  ok   ← getUser() validates a real session
+```
+
+`wallTime` is the readable signal here, not `cpuTime`: a request with no session cookie finishes
+in single-digit ms because `getUser()` never leaves the isolate. Anything above ~50 ms means a
+token existed and went to Frankfurt to be checked. **Careful — that proves a token was *present*,
+not that it was *accepted*;** an expired token produces the same round-trip and still returns
+`null`. Confirm signed-in state from the UI, not from the timing alone.
+
+**Actuals**: secrets `df0e7e0c…` → `c2f46f40…` · cpuTime median 4–8 ms, max 25 ms in real auth
+traffic · email confirmation **ON**, working end-to-end · 2026-09-06
 
 ---
 
