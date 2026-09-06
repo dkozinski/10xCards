@@ -3,7 +3,7 @@ project: 10xCards
 change: deployment
 planned_at: 2026-08-31
 verified_at: 2026-08-31
-status: phase-0-done
+status: phase-1-done
 platform: Cloudflare Workers
 worker_name: 10xcards
 auto_deploy: Cloudflare Workers Builds (no GitHub Actions in the deploy path)
@@ -314,33 +314,33 @@ diff, one commit.
 
 ### `wrangler.jsonc`
 
-- [ ] `"name"`: `10x-astro-starter` → `"10xcards"`.
-- [ ] Pin the SESSION namespace at the **top level**:
+- [x] `"name"`: `10x-astro-starter` → `"10xcards"`.
+- [x] Pin the SESSION namespace at the **top level**:
       `"kv_namespaces": [{ "binding": "SESSION", "id": "736db4b78a574ebf912a5d6f02926b90" }]`.
-- [ ] **Mirror the pin into `previews`** —
+- [x] **Mirror the pin into `previews`** —
       `"previews": { "kv_namespaces": [{ "binding": "SESSION", "id": "736db4…" }], "images": { "binding": "IMAGES" } }`.
       The adapter re-runs binding injection against this sub-config; a top-level pin
       alone leaves preview uploads auto-provisioning an untracked namespace (E3).
-- [ ] Declare `"images": { "binding": "IMAGES" }` explicitly so the injection
+- [x] Declare `"images": { "binding": "IMAGES" }` explicitly so the injection
       short-circuits and the binding is visible in the diff (E4).
-- [ ] `not_found_handling`: `"404-page"` → `"none"`. With `output: "server"` the Worker
+- [x] `not_found_handling`: `"404-page"` → `"none"`. With `output: "server"` the Worker
       owns unmatched paths; `404-page` starts hijacking them the day someone adds a
       prerendered `src/pages/404.astro` (E23).
-- [ ] Set `"workers_dev": true` and `"preview_urls": true` explicitly — both currently
+- [x] Set `"workers_dev": true` and `"preview_urls": true` explicitly — both currently
       ride on defaults, and Cloudflare made `preview_urls` opt-in in Sept 2025 (E5).
-- [ ] Comment that `SESSION` exists only because the adapter injects it and **must not**
+- [x] Comment that `SESSION` exists only because the adapter injects it and **must not**
       hold review state — KV is eventually consistent up to 60 s, against the PRD guardrail.
-- [ ] Leave `assets.directory: "./dist"` **alone** — the build discards it and writes
+- [x] Leave `assets.directory: "./dist"` **alone** — the build discards it and writes
       `../client`. Changing it is a no-op that looks like a fix (E2).
 
 ### Dependencies
 
-- [ ] `@astrojs/cloudflare` `^13.5.0` → `^13.7.0`, then `npm install` so
+- [x] `@astrojs/cloudflare` `^13.5.0` → `^13.7.0`, then `npm install` so
       **`package-lock.json` moves too**. Without it, Workers Builds' clean install
       builds against 13.5.0 — a version never tested here, and the adapter minor is
       exactly what controls the generated config this plan depends on (E11). Never widen
       to `^14` (peers on Astro 7).
-- [ ] `npm audit fix` — **without `--force`**. The lockfile is already being rewritten by the
+- [x] `npm audit fix` — **without `--force`**. The lockfile is already being rewritten by the
       bump above, so this rides along for free and clears `nanoid` and `undici` (both
       `fixAvailable: true`), taking the audit from 4 high to 2 with no major version change.
       Re-run check 5 afterwards to confirm the adapter is still 13.7.0.
@@ -359,51 +359,122 @@ diff, one commit.
 
 ### Application code — the minimum that makes a deployed app work
 
-- [ ] `export const prerender = false;` in all three
+- [x] `export const prerender = false;` in all three
       `src/pages/api/auth/{signin,signup,signout}.ts` — AGENTS.md hard rule, currently
       violated repo-wide.
-- [ ] **New `src/pages/auth/confirm.ts`** (`export const prerender = false`): a `GET`
+- [x] **New `src/pages/auth/confirm.ts`** (`export const prerender = false`): a `GET`
       route handling both flows —
       `?token_hash=&type=` → `supabase.auth.verifyOtp({ type, token_hash })`, and
       `?code=` → `supabase.auth.exchangeCodeForSession(code)`. Redirect to `next ?? "/"`
       on success, to `/auth/signin?error=…` on failure. This is what makes signup
       completable at all (E9); the same route serves password reset later.
-- [ ] `src/pages/api/auth/signup.ts`: pass
+- [x] `src/pages/api/auth/signup.ts`: pass
       `{ options: { emailRedirectTo: <origin>/auth/confirm } }` to `signUp`, and branch
       on the returned session —
       `return context.redirect(data.session ? "/" : "/auth/confirm-email")`.
       Needed because `confirm-email.astro:4` keys its copy off `import.meta.env.DEV`, so
       production would otherwise tell an already-signed-in user to check their email (E22).
-- [ ] **`Cache-Control: private, no-store` on every response that issues `Set-Cookie`** —
+- [x] **`Cache-Control: private, no-store` on every response that issues `Set-Cookie`** —
       `src/middleware.ts`, the three `src/pages/api/auth/*` routes, and the new
       `src/pages/auth/confirm.ts`. E25 only checks that the cookie is *present* on the 302;
       this makes sure the edge never holds a response carrying someone's session.
-- [ ] `astro.config.mjs`: leave `site` unset for now — filled in Phase 6 once the
+- [x] `astro.config.mjs`: leave `site` unset for now — filled in Phase 6 once the
       hostname exists.
 
 ### Scripts & housekeeping
 
-- [ ] `package.json` scripts, named for what they actually do:
+- [x] `package.json` scripts, named for what they actually do:
       `"deploy:preview": "astro build && wrangler versions upload"`,
       `"deploy:promote": "wrangler versions deploy"`,
       `"deploy:rollback": "wrangler rollback"`.
       Deliberately **no bare `"deploy"`** — an unqualified name invites the one-shot
       100%-traffic command the risk register asks us to avoid.
-- [ ] `.dev.vars.example` (committed — `.gitignore` matches `.dev.vars`, not
+- [x] `.dev.vars.example` (committed — `.gitignore` matches `.dev.vars`, not
       `.dev.vars.example`).
-- [ ] `.github/workflows/ci.yml`: drop the `SUPABASE_URL`/`SUPABASE_KEY` build `env`.
+- [x] `.github/workflows/ci.yml`: drop the `SUPABASE_URL`/`SUPABASE_KEY` build `env`.
       They are inert — `access: "secret"` astro:env values resolve at runtime, not build,
       and both are `optional`. Keep `npm run build` and both triggers: CI is the only
       thing that can fail a change *before* merge, and Workers Builds does not read
       GitHub check status.
-- [ ] `npm run lint` clean; rebuild; **assert the generated config** (check 4).
-- [ ] **Local workerd run before Cloudflare ever sees this.** `cp .dev.vars.example .dev.vars`,
+- [x] `npm run lint` clean; rebuild; **assert the generated config** (check 4).
+- [x] **Local workerd run before Cloudflare ever sees this.** `cp .dev.vars.example .dev.vars`,
       fill it with the **cloud** project's URL and publishable key (P5 — not a local stack, and
       never a `127.0.0.1` URL), `npx wrangler dev`, then exercise `/`, `/auth/signin`,
       `/dashboard`. Watch the console for `[unenv] … not implemented yet!` and
       `Dynamic require of "stream"` — this is the cheapest place to hit E15, and the only one
       that costs nothing when it fails. `.dev.vars` is gitignored (`.gitignore:55`);
       `.dev.vars.example` is the committed template (check 21).
+
+---
+
+### Phase 1 — actuals (executed 2026-09-06)
+
+One commit on `chore/cloudflare-deploy`. No Cloudflare or Supabase writes: every
+command was local, and the only network traffic was the Supabase auth call the local
+workerd run makes on its own.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| 4 | assert `dist/server/wrangler.json` | **PASS** — `name: 10xcards`, `id: 736db4…` in **both** `kv_namespaces` and `previews.kv_namespaces`, `not_found_handling: none`, `assets.directory: ../client`, `workers_dev`/`preview_urls` `true` |
+| 5 | `npm ci` then adapter version | `13.7.0` in `node_modules` and lockfile ✅ |
+| 6 | `grep -rn "export const prerender" src/pages/` | 4 hits, all `= false` ✅ |
+| 7 | `wrangler deploy --dry-run` | **gzip 396.46 KiB** against the 3 MB Free cap — 13 % of budget ✅ |
+| 17 | `wrangler kv namespace list` | still exactly one; the build provisions nothing ✅ |
+| 21 | `wrangler dev` on `:8787` | `/`, `/auth/signin`, `/auth/signup` → 200; `/dashboard` → 302 `/auth/signin`; `/auth/confirm` (no params) → 302 with the error. **No `[unenv] … not implemented yet!`, no `Dynamic require of "stream"`** — E15 did not fire ✅ |
+| — | `npm run lint` | exit 0 ✅ |
+
+`wrangler deploy --dry-run` also prints the binding table, and it is the readable
+proof the pin took: `env.SESSION (736db4b78a574ebf912a5d6f02926b90)` where the
+pre-Phase-1 build printed a bare `env.SESSION`.
+
+**Deviation — `Cache-Control` lives in the middleware, not in five files.** The plan
+asked for the header on `src/middleware.ts`, the three API routes and
+`src/pages/auth/confirm.ts` individually. It is set once, in the middleware, for two
+reasons found while implementing it:
+
+1. **A response cannot be sniffed for cookies there.** Astro's
+   `attachCookiesToResponse` does not write a header — it pins the `AstroCookies`
+   object to the `Response` under `Symbol.for("astro.cookies")`, and the adapter
+   serialises `Set-Cookie` later. `response.headers.has("set-cookie")` is therefore
+   always `false` inside middleware, so a conditional per route is not implementable.
+2. **Every response is a candidate anyway.** `getUser()` runs on every request (E27)
+   and can refresh the session on any of them, so the set of session-bearing
+   responses is not "the auth routes" — it is "all of them".
+
+The middleware now sets `private, no-store` on any response that does not already
+carry a `Cache-Control`, which is a strict superset of what the plan asked for and
+cannot be forgotten when a route is added. Verified live: `/`, `/auth/signin` and
+`/dashboard` all return it. Static assets are unaffected — they are served by the
+ASSETS binding before the Worker runs, and the build injects
+`public, max-age=31536000, immutable` for `/_astro/*` into `_headers`, confirmed by
+`curl` against the local run.
+
+**Finding — check 15 as written produces a false failure.** `curl -X POST` without an
+`Origin` header returns **403**, not a 302, because Astro ships CSRF protection on by
+default (`"checkOrigin": true` in the built manifest). Zero `Set-Cookie` on a 403 is
+indistinguishable from the failure check 15 exists to catch. With
+`-H 'Origin: <the site origin>'` the same request returns `302 /auth/signin?error=Invalid login credentials`
+plus `Cache-Control: private, no-store`. Check 15 has been corrected below.
+
+**Finding — `nanoid` does not reach production.** The audit note said `astro` and
+`nanoid` are the two findings that reach the deployed surface. `nanoid` does not:
+it enters via `@astrojs/cloudflare → vite → postcss`, all build-time, and
+`grep -rl nanoid dist/server/` finds nothing after a full build. `astro` remains the
+only advisory with real production exposure, and the fix is still the Astro 7 major
+this change deliberately excludes.
+
+**Unplanned — `npm audit fix` moved wrangler `4.118.0 → 4.129.0`** (and `workerd`
+with it) to clear its advisory. P1 called a wrangler update optional and out of
+scope, with the condition that check 4 be re-run if it happens. It happened, check 4
+was re-run after `npm ci` and a full rebuild, and the generated config is unchanged.
+Audit went **11 → 5** (1 low, 1 moderate, 3 high); all five now require the Astro 7
+major.
+
+**Nuance on E3.** The manifest shows Astro Sessions are not merely bindable but
+*configured*: `"sessionConfig": {"driver":"unstorage/drivers/cloudflare-kv-binding","options":{"binding":"SESSION"}}`.
+The driver is wired by the adapter regardless. Nothing in `src/` calls
+`Astro.session`, so it stays inert — but "unconfigured" was the wrong word; "wired
+and unused" is accurate, and it is why the binding cannot simply be dropped.
 
 ---
 
@@ -726,7 +797,10 @@ auto-deploy version ID
   on adapter 13.5.0 while you run 13.7.0. Commit the lockfile.
 - **E12 — Node version.** Resolution order is `NODE_VERSION` → `.nvmrc` / `.node-version`
   → default 24.18.0 (22.23.2 also preinstalled).
-- **E19 — Unpushed commits.** `main` is 3 ahead of `origin/main` (`5e19d63`, `63b9aa6`, `54cccbb`).
+- **E19 — Unpushed commits.** `main` is ahead of `origin/main` and always will be until
+  Phase 6 pushes. The count is deliberately not recorded here — it grows with every
+  commit this file receives, and chasing it produced two stale corrections already.
+  Read it when you need it: `git rev-list --count origin/main..main` (4 on 2026-09-06).
 - **E20 — One deploy path only.** Never add a deploy job to `ci.yml`.
 - **E21 — The GitHub App is account-scoped** and breaks silently if the repo is renamed,
   transferred, or its access narrowed. Symptom: pushes stop producing builds, with no
@@ -772,7 +846,7 @@ Pass `--name 10xcards` everywhere — it defeats any stale redirect config.
 | 12 | Secrets set | `npx wrangler secret list --name 10xcards` | exactly `SUPABASE_URL` + `SUPABASE_KEY`, `secret_text` |
 | 13 | **Key actually valid** | `curl -sS -o /dev/null -w '%{http_code}\n' -H "apikey: $KEY" https://xjykknkrkmtcdqvyirtt.supabase.co/auth/v1/settings` | `200`. `401` = wrong key — the banner would never tell you |
 | 14 | Key type, before pasting | value matches `^sb_publishable_` | if `^sb_secret_`, **abort** |
-| 15 | Cookie on the redirect | `curl -sS -i -X POST -d 'email=…&password=…' https://…/api/auth/signin \| grep -i '^set-cookie'` | ≥1 `sb-xjykknkrkmtcdqvyirtt-auth-token…`, `HttpOnly; Secure; Path=/`. **Zero `Set-Cookie` on the 302 is the failure mode** |
+| 15 | Cookie on the redirect | `curl -sS -i -X POST -H 'Origin: https://10xcards.<sub>.workers.dev' -d 'email=…&password=…' https://…/api/auth/signin \| grep -i '^set-cookie'` | ≥1 `sb-xjykknkrkmtcdqvyirtt-auth-token…`, `HttpOnly; Secure; Path=/`. **The `Origin` header is mandatory**: Astro's CSRF guard (`checkOrigin: true`) answers a POST without it with `403` and no cookie, which looks exactly like the failure this check hunts. **Zero `Set-Cookie` on the 302 is the failure mode** |
 | 16 | Runtime + CPU baseline | `npx wrangler tail --name 10xcards --format json` while exercising the app | `"outcome":"ok"`, no exceptions; no `1102`, no `[unenv]`, no `Dynamic require`. Then read `cpuTime` — **≥7 ms on this tiny surface means Free will not survive the proposals screen** |
 | 17 | **KV auto-provisioning** | `npx wrangler kv namespace list` — after first deploy **and** after the first `versions upload` | exactly one, `736db4…`. The upload is when the previews-pin failure bites |
 | 18 | Upload shifts no traffic | `versions upload` then `deployments list --name 10xcards` | new Version ID + preview URL; active deployment unchanged |

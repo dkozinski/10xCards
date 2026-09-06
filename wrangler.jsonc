@@ -1,14 +1,57 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "10x-astro-starter",
+  "name": "10xcards",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2026-05-08",
   "compatibility_flags": ["nodejs_compat"],
+
+  // The deployed config is GENERATED, not this file. `astro build` writes
+  // dist/server/wrangler.json and .wrangler/deploy/config.json redirects wrangler
+  // there, so editing this file does nothing until you rebuild (E1). Always pass
+  // --name on wrangler commands so a stale artifact can never retarget you.
+
+  // SESSION exists only because @astrojs/cloudflare injects a KV binding for Astro
+  // Sessions on every build — we do not configure or use Astro Sessions anywhere.
+  // It is pinned to the existing namespace so wrangler stops auto-provisioning a
+  // fresh `10xcards-session` on every deploy (E3). Measured 2026-09-06: without
+  // these pins BOTH the production and the preview path auto-provision.
+  //
+  // MUST NOT hold review state. KV is eventually consistent for up to 60 s, which
+  // would let an accepted flashcard reappear unreviewed. Review state belongs in
+  // Supabase Postgres.
+  "kv_namespaces": [{ "binding": "SESSION", "id": "736db4b78a574ebf912a5d6f02926b90" }],
+
+  // Injected unconditionally by the adapter and there is no off switch
+  // (`imagesBindingName` is typed string, so `false` is not valid) (E4). Declared
+  // here so the injection short-circuits and the binding shows up in the diff.
+  // Inert today: the repo has zero astro:assets / <Image> / getImage usage.
+  "images": { "binding": "IMAGES" },
+
+  // The adapter re-runs binding injection against this sub-config, so a top-level
+  // pin alone still leaves `versions upload` provisioning an untracked namespace.
+  // Both pins must exist (E3).
+  "previews": {
+    "kv_namespaces": [{ "binding": "SESSION", "id": "736db4b78a574ebf912a5d6f02926b90" }],
+    "images": { "binding": "IMAGES" },
+  },
+
   "assets": {
     "binding": "ASSETS",
+    // Leave this alone. The build discards it and writes "../client"; changing it
+    // is a no-op that looks like a fix (E2).
     "directory": "./dist",
-    "not_found_handling": "404-page",
+    // "none", not "404-page": with output: "server" the Worker owns unmatched
+    // paths. "404-page" would start hijacking them the day someone adds a
+    // prerendered src/pages/404.astro (E23).
+    "not_found_handling": "none",
   },
+
+  // Both were riding on defaults. Cloudflare made preview_urls opt-in in Sept 2025,
+  // and preview_urls defaults to the value of workers_dev — disabling workers_dev
+  // silently kills the preview story too (E5).
+  "workers_dev": true,
+  "preview_urls": true,
+
   "observability": {
     "enabled": true,
   },

@@ -18,7 +18,8 @@ jobs:
       - run: npm ci
       - run: npx astro sync
       - run: npm run lint
+      # No SUPABASE_* env here on purpose: both astro:env fields are
+      # access: "secret" + optional, so they resolve at runtime on the Worker,
+      # never at build time. CI stays the pre-merge gate (Workers Builds does
+      # not read GitHub check status); it must never deploy (E20).
       - run: npm run build
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
