@@ -546,7 +546,9 @@ the banner proves the banner works.
 
 - [ ] `/_astro/*` assets return 200, not 404.
 - [ ] `/dashboard` 302s to `/auth/signin`.
-- [ ] `npx wrangler tail --name 10xcards --format json` open during these clicks.
+- [ ] `npx wrangler tail 10xcards --format json` open during these clicks. **Note the shape:**
+      `tail` takes the Worker as a *positional* argument, unlike every other command in this
+      plan — `--name` here fails with `Unknown argument: name` (measured 2026-09-06).
 
 **Actuals** *(fill in)*: URL · version ID · date
 
@@ -896,7 +898,7 @@ Pass `--name 10xcards` everywhere — it defeats any stale redirect config.
 | 13 | **Key actually valid** | `curl -sS -o /dev/null -w '%{http_code}\n' -H "apikey: $KEY" https://xjykknkrkmtcdqvyirtt.supabase.co/auth/v1/settings` | `200`. `401` = wrong key — the banner would never tell you |
 | 14 | Key type, before pasting | value matches `^sb_publishable_` | if `^sb_secret_`, **abort** |
 | 15 | Cookie on the redirect | `curl -sS -i -X POST -H 'Origin: https://10xcards.<sub>.workers.dev' -d 'email=…&password=…' https://…/api/auth/signin \| grep -i '^set-cookie'` | ≥1 `sb-xjykknkrkmtcdqvyirtt-auth-token…`, `HttpOnly; Secure; Path=/`. **The `Origin` header is mandatory**: Astro's CSRF guard (`checkOrigin: true`) answers a POST without it with `403` and no cookie, which looks exactly like the failure this check hunts. **Zero `Set-Cookie` on the 302 is the failure mode** |
-| 16 | Runtime + CPU baseline | `npx wrangler tail --name 10xcards --format json` while exercising the app | `"outcome":"ok"`, no exceptions; no `1102`, no `[unenv]`, no `Dynamic require`. Then read `cpuTime` — **≥7 ms on this tiny surface means Free will not survive the proposals screen** |
+| 16 | Runtime + CPU baseline | `npx wrangler tail 10xcards --format json` while exercising the app — **positional, not `--name`**: `tail` is the one exception to this plan's `--name` rule and rejects the flag outright | `"outcome":"ok"`, no exceptions; no `1102`, no `[unenv]`, no `Dynamic require`. Then read `cpuTime` — **≥7 ms on this tiny surface means Free will not survive the proposals screen** |
 | 17 | **KV auto-provisioning** | `npx wrangler kv namespace list` — after first deploy **and** after the first `versions upload` | exactly one, `736db4…`. The upload is when the previews-pin failure bites |
 | 18 | Upload shifts no traffic | `versions upload` then `deployments list --name 10xcards` | new Version ID + preview URL; active deployment unchanged |
 | 19 | Workers Builds wiring | push a throwaway branch, read the build log | last step is `versions upload`, **not** `deploy`; then 17 and 18 still pass |
