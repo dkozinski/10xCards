@@ -44,7 +44,7 @@ the dashboard-only settings no file in the repo can express.
 | `compatibility_date` | `2026-05-08` — safe (see E14) |
 | `@astrojs/cloudflare` | range `^13.5.0`, lockfile **13.5.0**, `node_modules` **13.7.0** ← drift |
 | `prerender = false` | **absent from all three API routes** — violates AGENTS.md |
-| git | `main` @ `63b9aa6`, **2 commits ahead of unpushed `origin/main`**; remote `dkozinski/10xCards`; no branch protection |
+| git | `main` @ `54cccbb`, **3 commits ahead of unpushed `origin/main`**; remote `dkozinski/10xCards`; no branch protection |
 | `dist/` + `.wrangler/` | stale, from a deleted branch — see the landmine below |
 
 **The stale-build landmine.** `.wrangler/deploy/config.json` redirects wrangler to
@@ -174,13 +174,13 @@ Phase 1's `wrangler dev` step needs `.dev.vars` at the repo root (gitignored, `.
 ### P6 — GitHub
 
 - ✅ SSH remote reachable, push access confirmed: `git ls-remote --heads origin` succeeds;
-  `main` is **2 commits ahead** of `origin/main` (E19).
+  `main` is **3 commits ahead** of `origin/main` (E19).
 - ✅ **`dkozinski/10xCards` is public** (verified 2026-08-31). Consequence, and it is not
   cosmetic: rulesets / branch protection are **free**, so the Phase 6 gate — *merging to `main`
   is the production promote* — is genuinely enforced rather than a convention. The fallback
   this plan used to hedge on (a local `pre-push` hook rejecting `main`) is **not needed**;
-  drop it from consideration. GitHub also shows 17 commits on `main` against 19 locally,
-  independently confirming the 2 unpushed commits (E19).
+  drop it from consideration. GitHub also shows 17 commits on `main` against 20 locally,
+  independently confirming the 3 unpushed commits (E19).
 - `gh` is installed but **not authenticated** (`gh auth status` → not logged in). It is not
   required — pushes go over SSH — but `gh auth login` is the quickest way to check visibility
   and to set branch protection without clicking. Optional.
@@ -214,6 +214,15 @@ curl -sS -o /dev/null -w 'supabase key -> HTTP %{http_code}\n' -H "apikey: $KEY"
 value. Nothing in the prerequisites blocks Phase 0 any more — the remaining work is Phase 1
 code, not setup.
 
+**Re-verified 2026-08-31 (second sweep).** The whole block was run again against live
+Cloudflare, Supabase and GitHub state and every check still returns the expected value:
+adapter `13.5.0` across `node_modules` / lockfile / `package.json`, `whoami` still a single
+account with no `CLOUDFLARE_API_TOKEN` in the shell, check 13 still `HTTP 200`,
+`mailer_autoconfirm` still `false` (so E9's premise holds), exactly one KV namespace, and
+both Worker names still `10007`. The only value that moved is the unpushed-commit count:
+**2 → 3**, because the plan file itself was committed as `54cccbb`. The stale-build landmine
+(`dist/`, `.wrangler/`) is still present and still Phase 0's job.
+
 The last two lines are the ones worth keeping: the adapter version guards against E11 (a
 lockfile that builds a different version in the cloud than on your machine), and the `curl`
 is the only check that distinguishes a *valid* key from a merely *present* one (E7).
@@ -224,12 +233,12 @@ is the only check that distinguishes a *valid* key from a merely *present* one (
 
 No Cloudflare writes. Agent may run unattended.
 
-- [ ] `git status` clean; note the 2 unpushed commits — **do not push yet**.
+- [ ] `git status` clean; note the 3 unpushed commits — **do not push yet**.
 - [ ] `rm -rf dist .wrangler` — removes the redirect-config landmine (`astro build`
       empties `dist/` itself, so this is one-time hygiene, not a recurring step).
 - [ ] Re-confirm nothing is deployed under **either** name (checks 1–2 below).
 - [ ] `npx wrangler kv namespace list` — snapshot: exactly one namespace.
-- [ ] `git switch -c chore/cloudflare-deploy` from `main` (@ `63b9aa6`).
+- [ ] `git switch -c chore/cloudflare-deploy` from `main` (@ `54cccbb`).
 - [ ] Record the baseline table above with the commands that produced each row.
 - [ ] `npm run lint && npm run build` — clean before anything changes.
 
@@ -456,7 +465,7 @@ by now everything it would deploy is known-good and already live.
 
 - [ ] `astro.config.mjs`: set `site: "https://10xcards.<subdomain>.workers.dev"` —
       `sitemap()` is a silent no-op without it. One line to change when a real domain arrives.
-- [ ] Push the branch, open a PR, merge. Push the 2 stale local commits too — Workers
+- [ ] Push the branch, open a PR, merge. Push all 3 stale local commits too — Workers
       Builds builds what GitHub has, not what your machine has (E19).
 - [ ] Dashboard → Workers & Pages → `10xcards` → Settings → **Builds** → install the
       Cloudflare **GitHub App**, scoped to `dkozinski/10xCards` only.
@@ -651,7 +660,7 @@ auto-deploy version ID
   on adapter 13.5.0 while you run 13.7.0. Commit the lockfile.
 - **E12 — Node version.** Resolution order is `NODE_VERSION` → `.nvmrc` / `.node-version`
   → default 24.18.0 (22.23.2 also preinstalled).
-- **E19 — Unpushed commits.** `main` is 2 ahead of `origin/main`.
+- **E19 — Unpushed commits.** `main` is 3 ahead of `origin/main` (`5e19d63`, `63b9aa6`, `54cccbb`).
 - **E20 — One deploy path only.** Never add a deploy job to `ci.yml`.
 - **E21 — The GitHub App is account-scoped** and breaks silently if the repo is renamed,
   transferred, or its access narrowed. Symptom: pushes stop producing builds, with no
