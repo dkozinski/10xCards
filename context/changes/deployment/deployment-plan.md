@@ -3,7 +3,7 @@ project: 10xCards
 change: deployment
 planned_at: 2026-08-31
 verified_at: 2026-09-06
-status: phase-1-done
+status: phase-3-done
 platform: Cloudflare Workers
 worker_name: 10xcards
 auto_deploy: Cloudflare Workers Builds (no GitHub Actions in the deploy path)
@@ -526,31 +526,90 @@ and unused" is accurate, and it is why the binding cannot simply be dropped.
 
 The one deliberate exception to the two-step version flow.
 
-- [ ] `npm run build`
-- [ ] `npx wrangler deploy` — **bare `deploy`, once.** `versions upload` does not apply
+- [x] `npm run build`
+- [x] `npx wrangler deploy` — **bare `deploy`, once.** `versions upload` does not apply
       configuration changes (routes, the `workers.dev` subdomain, triggers); only
       `deploy` does, which is also why secrets cannot come first — `secret put` against a
       non-existent script returns `10007` (E5, E6).
-- [ ] 🚦 **Register the `workers.dev` subdomain by hand in the dashboard FIRST**, at
+- [x] 🚦 **Register the `workers.dev` subdomain by hand in the dashboard FIRST**, at
       `https://dash.cloudflare.com/d6b37cfd4e6eebd6767c201f8f5491b5/workers/onboarding`.
       **Human only, and it must precede the deploy** — wrangler 4.129 does not ask; it
       auto-registers a name taken from `package.json`'s `name` field (E5, corrected
       2026-09-06). The name is account-wide, globally unique and not cleanly reversible.
       There is no CLI equivalent. Register the subdomain only — do not create a Worker in
       the panel; `wrangler deploy` does that.
-- [ ] Record `https://10xcards.<subdomain>.workers.dev` and the version ID here.
+- [x] Record `https://10xcards.<subdomain>.workers.dev` and the version ID here.
 
 **The success criterion is a site that says it is not configured.** A 200 plus the
 "nie jest skonfigurowany" banner is exactly right — secrets aren't set yet, and seeing
 the banner proves the banner works.
 
-- [ ] `/_astro/*` assets return 200, not 404.
-- [ ] `/dashboard` 302s to `/auth/signin`.
-- [ ] `npx wrangler tail 10xcards --format json` open during these clicks. **Note the shape:**
+- [x] `/_astro/*` assets return 200, not 404.
+- [x] `/dashboard` 302s to `/auth/signin`.
+- [x] `npx wrangler tail 10xcards --format json` open during these clicks. **Note the shape:**
       `tail` takes the Worker as a *positional* argument, unlike every other command in this
       plan — `--name` here fails with `Unknown argument: name` (measured 2026-09-06).
 
-**Actuals** *(fill in)*: URL · version ID · date
+### Phase 3 — actuals (executed 2026-09-06)
+
+| Field | Value |
+| --- | --- |
+| **Production URL** | **`https://10xcards.dkozinski.workers.dev`** |
+| Account subdomain | `dkozinski` (renamed from `dkozinsk` mid-phase — see below) |
+| First version ID | `ef6002a4-6091-40fc-a826-43be190f41d6` @ 17:51:56Z |
+| Current version ID | `4e2fab7b-6af5-4288-9f0a-a787304be48c` @ 18:01:27Z, 100 % traffic |
+| Worker startup time | 23–24 ms |
+| Bundle | 1935.30 KiB raw / **396.46 KiB gzip** (13 % of the 3 MB Free cap) |
+
+| Check | Result |
+| --- | --- |
+| 9 — alive | `HTTP 200` ✅ |
+| 10 — banner **present** | exactly `1` occurrence of "nie jest skonfigurowany" ✅ — the pass criterion pre-secrets; proves `astro:env/server` resolution works on workerd (E16) |
+| 11 — route guard | `/dashboard` → `302 …/auth/signin` ✅ |
+| E2 — static assets | `/_astro/*.css` → `200 text/css`, not 404 ✅ |
+| 17 — **KV auto-provisioning** | still exactly one namespace, `736db4…`, across **two** deploys ✅ — the Phase 1 pin holds |
+| Phase 1 header | `cache-control: private, no-store` present in production ✅ |
+| `/auth/confirm` with no params | `302 …/auth/signin?error=Supabase%20is%20not%20configured` ✅ — the route is wired and fails closed |
+| 16 — runtime | 16 events, **all `outcome: ok`**, zero exceptions, zero console logs, no `[unenv]`, no `Dynamic require`, no `1102` ✅ — **E15 did not fire in production** |
+
+**The account already had a subdomain, derived from the e-mail.** The panel showed
+`dkozinsk` — the local part of `dkozinsk@gmail.com` — which the owner never consciously set.
+It was renamed to `dkozinski` between the two deploys. Renaming is free *only* because
+nothing was wired to the host yet; after Phase 4 it would mean re-editing the Supabase Site
+URL and three Redirect URLs, with broken auth in between. **If a rename is ever wanted, this
+is the phase to do it in.**
+
+**A stale local DNS negative cache cost ~10 minutes.** After the rename both the old and the
+new host returned `curl` exit 6 / `HTTP 000`, which reads exactly like "the deploy is broken".
+It was not: `dig @1.1.1.1` and `@8.8.8.8` both answered with Cloudflare IPs while the local
+resolver still held a cached NXDOMAIN. **Verify a fresh hostname against a public resolver
+before concluding anything**, and use `curl --resolve <host>:443:<ip>` to bypass the cache.
+Honest limitation: a re-deploy was run *before* the public resolvers were queried, so this
+record cannot say whether that re-deploy re-attached the `workers.dev` trigger or whether the
+route had been live all along. Query the public resolver **first** next time.
+
+**cpuTime baseline — the number the Paid gate turns on.** 16 requests across `/`,
+`/auth/signin`, `/auth/signup`, `/dashboard`:
+
+```
+median  5 ms   ·   max 31 ms   ·   4 of 16 requests over 10 ms  (15, 18, 19, 31)
+/dashboard        0–1 ms    (middleware 302s before rendering)
+/                 1–15 ms
+/auth/signin      5–31 ms   ← React island SSR, the expensive path
+/auth/signup      4–18 ms
+```
+
+Read it carefully, because it cuts two ways. The **median of 5 ms sits under the plan's 6 ms
+Paid trigger**, and every single request returned `ok` — nothing was killed. But four requests
+crossed the 10 ms Free CPU ceiling *without* producing a `1102`, and this record deliberately
+does **not** claim to know why (startup cost accounted separately, or a limit that is not
+enforced as strictly as E13 assumes — untested either way). What is not in doubt is the shape:
+the spikes land on the two React-island pages, exactly where E13 predicted, and this is the
+smallest surface this app will ever have. Treat 31 ms on an auth form as the warning it is —
+**the proposals screen is very likely the moment Free stops being viable**, which is precisely
+the gate the plan already recorded.
+
+**Actuals**: `https://10xcards.dkozinski.workers.dev` · `4e2fab7b-6af5-4288-9f0a-a787304be48c` · 2026-09-06
 
 ---
 
