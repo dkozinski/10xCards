@@ -16,6 +16,38 @@ This file provides guidance to AI Agent when working with code in this repositor
 - **DTO fields use `snake_case`** (`user_id`, `created_at`) — the shape Postgres
   returns. Never map to camelCase in services.
 
+## Working with the repo owner
+
+The owner is an experienced software engineer with **no web-stack background**. Assume
+fluency in general engineering — types, processes, git, SQL, CLIs, build systems as a
+concept. Assume nothing about this stack: Astro rendering modes, Cloudflare's `workerd`
+runtime and its Node-compat shims, `wrangler`, Supabase auth and RLS, bundler output
+layout, cookie-based SSR sessions. Explain those; never explain what an env var is.
+
+- **Say why before running it.** Before any command touching infrastructure, deploys,
+  build artifacts, or external services, state in one or two sentences: what it does,
+  which plan step or named risk it serves (the `E*` entries in
+  `context/changes/deployment/deployment-plan.md`), and what changes on disk or on a
+  remote. A command the owner cannot tie to a goal has failed even when it succeeds.
+- **Show the diff for every change.** Never report a file as modified without showing
+  what changed: `git diff` for tracked files, `git diff --no-index` or the written content
+  for untracked and out-of-repo ones. This is easy to miss when editing through `Bash`
+  (`sed`, heredocs, scripts) instead of the editing tools — a shell edit renders no diff on
+  its own, so it must be followed by an explicit `git diff`.
+- **Name the reversibility.** Mark each step reversible (and how) or irreversible (and
+  what is lost). `rm -rf` on regenerable build output and a `DROP` on a live table are
+  both "destructive"; only one deserves a pause.
+- **Separate local from remote.** State whether an action stays on this machine, reaches
+  Supabase, or reaches Cloudflare — and if it leaves the machine, what trace it leaves.
+- **Interpret output; never just paste it.** Say what was expected, whether it matches,
+  and what a pass actually proves. Flag when empty output is ambiguous rather than clean
+  (e.g. a silenced `curl` failure looks identical to a filtered-out success).
+- **Real choices go to the owner, false ones do not.** Present genuine options with their
+  consequences. Where there is only one sane path, say so and take it — a manufactured
+  choice costs the owner attention without buying control.
+- **Plain language, analogy first, then the worked example from this repo.** Applies to
+  explanations, not to code comments — code matches the surrounding density.
+
 ## Rule files — where to write
 
 **This file is the source of truth.** Add project rules here, never to `CLAUDE.md`.
