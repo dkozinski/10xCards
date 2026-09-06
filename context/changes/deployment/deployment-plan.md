@@ -2,7 +2,7 @@
 project: 10xCards
 change: deployment
 planned_at: 2026-08-31
-verified_at: 2026-08-31
+verified_at: 2026-09-06
 status: phase-1-done
 platform: Cloudflare Workers
 worker_name: 10xcards
@@ -222,6 +222,15 @@ account with no `CLOUDFLARE_API_TOKEN` in the shell, check 13 still `HTTP 200`,
 both Worker names still `10007`. The only value that moved is the unpushed-commit count:
 **2 → 3**, because the plan file itself was committed as `54cccbb`. The stale-build landmine
 (`dist/`, `.wrangler/`) is still present and still Phase 0's job.
+
+**Third sweep, 2026-09-06 — one prerequisite had silently expired.** Re-running the block
+before Phase 3 caught the Supabase host at **NXDOMAIN**: the project had auto-paused after a
+week of idleness (E29). Restored from the dashboard; the ref and the publishable key both
+survived, and check 13 returned **`200`** with `mailer_autoconfirm: false` — so E9's premise
+still holds and Phase 2's template change is still required. Everything else re-verified
+green: generated config still `10xcards` with `736db4…` pinned in **both** KV arrays,
+exactly one KV namespace, both Worker names still `10007`, `whoami` a single account, no
+`CLOUDFLARE_API_TOKEN` in the shell. Unpushed commits are now **6**.
 
 The last two lines are the ones worth keeping: the adapter version guards against E11 (a
 lockfile that builds a different version in the cloud than on your machine), and the `curl`
@@ -790,6 +799,19 @@ auto-deploy version ID
 - **E27 — `getUser()` runs on every request**, including `/`. That is one Frankfurt
   round-trip per page view, and a Supabase outage takes down the whole site, not just
   `/dashboard`. Latency and blast radius, not correctness — but worth knowing.
+
+- **E29 — A free-tier Supabase project pauses after ~7 days idle, and the symptom is DNS,
+  not HTTP.** Measured 2026-09-06: `xjykknkrkmtcdqvyirtt.supabase.co` returned **NXDOMAIN**
+  from both `1.1.1.1` and `8.8.8.8` while `supabase.co` resolved normally. Supabase tears the
+  compute down and withdraws the record rather than serving an error, so every check in this
+  plan fails as a *name resolution* failure — `curl` exits 6 with `HTTP 000`, which is
+  indistinguishable from a firewall or a typo in the hostname. Restore is a dashboard button
+  and preserves the project ref **and** the keys: check 13 returned `200` with the unchanged
+  `sb_publishable_` key minutes later, and `mailer_autoconfirm` was still `false`. Two
+  consequences worth carrying: before diagnosing a Supabase problem, resolve the host first
+  (`getent hosts <ref>.supabase.co`) — an NXDOMAIN means paused, not broken; and once the
+  Worker is live, `getUser()` on every request (E27) keeps the project awake on its own, so
+  this can only bite again during a quiet stretch *before* the site has traffic.
 
 ### GitHub
 
