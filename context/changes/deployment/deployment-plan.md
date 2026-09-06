@@ -3,7 +3,7 @@ project: 10xCards
 change: deployment
 planned_at: 2026-08-31
 verified_at: 2026-08-31
-status: planned
+status: phase-0-done
 platform: Cloudflare Workers
 worker_name: 10xcards
 auto_deploy: Cloudflare Workers Builds (no GitHub Actions in the deploy path)
@@ -233,14 +233,77 @@ is the only check that distinguishes a *valid* key from a merely *present* one (
 
 No Cloudflare writes. Agent may run unattended.
 
-- [ ] `git status` clean; note the 3 unpushed commits — **do not push yet**.
-- [ ] `rm -rf dist .wrangler` — removes the redirect-config landmine (`astro build`
-      empties `dist/` itself, so this is one-time hygiene, not a recurring step).
-- [ ] Re-confirm nothing is deployed under **either** name (checks 1–2 below).
-- [ ] `npx wrangler kv namespace list` — snapshot: exactly one namespace.
-- [ ] `git switch -c chore/cloudflare-deploy` from `main` (@ `54cccbb`).
-- [ ] Record the baseline table above with the commands that produced each row.
-- [ ] `npm run lint && npm run build` — clean before anything changes.
+- [x] `git status` clean; note the unpushed commits — **do not push yet**.
+- [x] Stale build removed — see the note on `rm -rf` below.
+- [x] Re-confirm nothing is deployed under **either** name (checks 1–2 below).
+- [x] `npx wrangler kv namespace list` — snapshot: exactly one namespace.
+- [x] `git switch -c chore/cloudflare-deploy` from `main`.
+- [x] Record the baseline table above with the commands that produced each row.
+- [x] `npm run lint && npm run build` — clean before anything changes.
+
+### Phase 0 — actuals (executed 2026-09-06)
+
+| # | Step | Command | Result |
+| --- | --- | --- | --- |
+| 1 | Working tree | `git status --short` | empty ✅ |
+| 1 | Unpushed | `git rev-list --count origin/main..main` | **4**, not 3 — `7d3c3f3` (this file's own sweep commit) is the fourth. Nothing pushed. |
+| 2 | Landmine, before | `cat .wrangler/deploy/config.json` | redirect → `dist/server/wrangler.json`, whose `name` was `10xcards` — confirmed exactly as documented |
+| 2 | Landmine, disarmed | `ls .wrangler/deploy/config.json dist` | both "No such file" — **check 3 ✅** |
+| 1–2 | Nothing deployed | `npx wrangler deployments list --name 10xcards` / `--name 10x-astro-starter` | both `10007` — *"This Worker does not exist on your account"* ✅ |
+| — | Auth posture | `npx wrangler whoami`; `$CLOUDFLARE_API_TOKEN` | account `d6b37cfd…`, single account; token **unset** ✅ (P2) |
+| 4 | KV, before build | `npx wrangler kv namespace list` | exactly one — `736db4b78a574ebf912a5d6f02926b90` / `SESSION` ✅ |
+| 5 | Branch | `git switch -c chore/cloudflare-deploy` | created from `7d3c3f3` (plan said `54cccbb`; `main` had moved). Deleted branch still recoverable at `c38da1c` ✅ |
+| 7 | Lint | `npm run lint` | exit 0, zero findings (only `astro-eslint-parser` `projectService` notices) ✅ |
+| 7 | Build | `npm run build` | exit 0, server built in 17.87 s ✅ |
+| 17 | KV, after build | `npx wrangler kv namespace list` | still exactly one — the build provisions nothing ✅ |
+| — | Repo clean | `git status --short` | empty — the build writes only gitignored paths ✅ |
+
+**`rm -rf` was declined; the artifacts were moved instead.** `dist/` (3.5 M) and
+`.wrangler/` (6.2 M) went to the session scratchpad
+(`…/scratchpad/phase0-stale-build/`) rather than being deleted. The effect on every
+subsequent step is identical — both paths are gone from the repo — and the move is
+reversible. They are gitignored build artifacts; `npm run build` regenerated `dist/`
+in step 7. Treat the scratchpad copy as disposable once Phase 1 lands.
+
+**The rebuild proves the landmine is gone.** The regenerated
+`dist/server/wrangler.json` now reads `name: 10x-astro-starter` — sourced from
+`wrangler.jsonc` in `main`, not the `10xcards` of the deleted branch. Every wrangler
+command in this plan still passes `--name` explicitly (E1).
+
+**Finding — E3 is understated: today there is no pin at all.** The generated config
+from a clean `main` is:
+
+```
+name                : 10x-astro-starter
+kv_namespaces       : [{"binding":"SESSION"}]      ← no id
+previews.kv         : [{"binding":"SESSION"}]      ← no id
+images / previews.images : {"binding":"IMAGES"}    ← injected unconditionally (E4)
+not_found_handling  : 404-page                     ← Phase 1 sets "none" (E23)
+assets.directory    : ../client                    ← source value discarded (E2)
+workers_dev         : undefined
+preview_urls        : undefined                    ← both ride on defaults (E5)
+compatibility_date  : 2026-05-08                   ← safe (E14)
+```
+
+The plan read the stale artifact as *"top-level has an `id`, `previews` does not"* —
+but that top-level `id` was residue of the deleted branch's own `wrangler.jsonc`.
+From `main` as it stands, **neither array carries an `id`**, so a deploy today would
+auto-provision a namespace on the *production* path too, not just on preview uploads.
+This does not change Phase 1's instructions — it pins both arrays either way — it
+raises the stakes on getting the top-level pin right, and it means check 17 is
+load-bearing from the very first `wrangler deploy`, not just from the first
+`versions upload`.
+
+The build log also announces both injections verbatim, which is the cheapest way to
+see E3/E4 happening:
+
+```
+[@astrojs/cloudflare] Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
+[@astrojs/cloudflare] Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
+[WARN] [@astrojs/sitemap] The Sitemap integration requires the `site` astro.config option. Skipping.
+```
+
+The sitemap warning is Phase 6's `site:` step reporting itself as not-yet-done.
 
 ---
 
@@ -564,6 +627,9 @@ auto-deploy version ID
   wrangler auto-provisioning would create `10xcards-session`. The pin must also be
   mirrored into `previews`, because the customizer re-runs against that sub-config. The
   orphan `736db4…` is what we pin to. Pinning ≠ using: Astro Sessions stay unconfigured.
+  **Measured 2026-09-06:** from a clean `main` *neither* array carries an `id` — the
+  top-level `id` seen in the stale artifact was the deleted branch's residue. Both the
+  production and the preview path would auto-provision. See Phase 0 actuals.
 - **E4 — IMAGES binding is unconditional and has no off switch.** `imagesBindingName` is
   typed `string`, so `imagesBindingName: false` (suggested in `infrastructure.md`) is not
   valid; only `imageService` is a lever. The repo has zero `astro:assets` / `<Image>` /
