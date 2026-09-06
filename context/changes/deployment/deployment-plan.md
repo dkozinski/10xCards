@@ -191,8 +191,10 @@ Phase 1's `wrangler dev` step needs `.dev.vars` at the repo root (gitignored, `.
 
 - Cloudflare **Workers Free**: 10 ms CPU, 50 subrequests, 3 MB gzipped bundle, 100k req/day
   (E13), and 24 h of Workers Logs retention (E28).
-- No `workers.dev` subdomain is registered on the account yet — which is why Phase 3 has an
-  interactive prompt that a human must answer (E5).
+- No `workers.dev` subdomain is registered on the account yet. **Corrected 2026-09-06:** this
+  does *not* produce an interactive prompt — wrangler auto-registers a name derived from
+  `package.json` and fails the deploy if it is taken. Register it in the dashboard before
+  Phase 3 (E5).
 - Supabase free tier sends roughly **2 confirmation emails per hour** (E24). Budget test
   addresses before smoke-testing signup, and don't read the rate limit as a broken deploy.
 
@@ -529,8 +531,13 @@ The one deliberate exception to the two-step version flow.
       configuration changes (routes, the `workers.dev` subdomain, triggers); only
       `deploy` does, which is also why secrets cannot come first — `secret put` against a
       non-existent script returns `10007` (E5, E6).
-- [ ] Answer the interactive subdomain-registration prompt if the account has no
-      `workers.dev` subdomain. **Human only** — this cannot run non-interactively.
+- [ ] 🚦 **Register the `workers.dev` subdomain by hand in the dashboard FIRST**, at
+      `https://dash.cloudflare.com/d6b37cfd4e6eebd6767c201f8f5491b5/workers/onboarding`.
+      **Human only, and it must precede the deploy** — wrangler 4.129 does not ask; it
+      auto-registers a name taken from `package.json`'s `name` field (E5, corrected
+      2026-09-06). The name is account-wide, globally unique and not cleanly reversible.
+      There is no CLI equivalent. Register the subdomain only — do not create a Worker in
+      the panel; `wrangler deploy` does that.
 - [ ] Record `https://10xcards.<subdomain>.workers.dev` and the version ID here.
 
 **The success criterion is a site that says it is not configured.** A 200 plus the
@@ -671,6 +678,11 @@ auto-deploy version ID
       `previews`-pin row. Amend the Approval bullet per Phase 6.
 - [ ] `tech-stack.md` — `ci_provider: github-actions` now describes only the lint/build
       check; record that the **deploy** path is Workers Builds.
+- [ ] `package.json` `"name"` is still `10x-astro-starter`. Rename to `10xcards` **and
+      regenerate the lockfile** (`npm install --package-lock-only`) so `npm ci` in Workers
+      Builds stays consistent (E11). Deliberately deferred out of Phase 1: this field is what
+      wrangler read when it tried to auto-claim the account subdomain (E5), so it is repo
+      identity with real reach, not cosmetics.
 - [ ] `README.md` — still the starter's ("10x Astro Starter", clone URL points at
       `przeprogramowani/10x-astro-starter`, script list predates the deploy scripts).
       Update title, clone URL, scripts, and add a Deployment section.
@@ -715,7 +727,22 @@ auto-deploy version ID
   valid; only `imageService` is a lever. The repo has zero `astro:assets` / `<Image>` /
   `getImage` usage, so the binding is inert, and Images Free allows 5,000 unique
   transformations/month — it does **not** block a Free deploy. Declare it, don't fight it.
-- **E5 — First deploy must be bare `wrangler deploy`.** `versions upload` applies no
+- **E5 — First deploy must be bare `wrangler deploy`.**
+  **Corrected 2026-09-06 — wrangler does not prompt for the `workers.dev` subdomain; it
+  picks one for you.** This plan assumed an interactive prompt a human answers. Wrangler
+  4.129.0 instead tries to *auto-register* a subdomain derived from the `name` field in
+  **`package.json`** — not from `wrangler.jsonc`, not from `--name`. Here that field still
+  held the starter default, so the first deploy attempted to claim `10x-astro-starter` as
+  this account's permanent, account-wide subdomain, silently. It failed only because the
+  name was already taken:
+  `Wrangler could not automatically register "10x-astro-starter" … the name is unavailable`.
+  Nothing was created — the Worker still returned `10007` afterwards and the KV count was
+  unchanged. Had the name been free, the account would now carry it forever. There is **no
+  CLI command** to register or change a subdomain (`wrangler subdomain` does not exist in
+  v4); the only path is the dashboard at
+  `https://dash.cloudflare.com/<account-id>/workers/onboarding`. **Register the subdomain by
+  hand there before the first deploy** — this is a real 🚦 GATE, and unattended agents must
+  never reach a first deploy on a fresh account. `versions upload` applies no
   config changes — routes, subdomain, triggers (`wrangler triggers deploy` exists for
   exactly that). This also bites later: change `routes` or `workers_dev` and the preview
   will look fine while the change doesn't take effect. Note `preview_urls` defaults to the
