@@ -724,8 +724,9 @@ Agent may run `versions upload`; a human promotes and rolls back.
 
 - [x] `npm run build && npx wrangler versions upload --name 10xcards --preview-alias staging`
       → stable `https://staging-10xcards.<subdomain>.workers.dev` plus a per-version URL.
-- [ ] Open the preview and sign in there — proves the `previews` KV pin took and that the
-      Supabase wildcard covers preview origins.
+- [x] Open the preview and sign in there — ~~proves the `previews` KV pin took and~~ proves
+      that the Supabase wildcard covers preview origins, and that `Set-Cookie` rides the 302
+      on a non-production origin. **The KV half of this claim was wrong** — see the actuals.
 - [x] `npx wrangler kv namespace list` → **still exactly one**. This is the check that
       catches the previews-pin failure, and this upload is the first moment it can bite.
 - [x] `npx wrangler deployments list --name 10xcards` → production still on the old
@@ -833,6 +834,28 @@ will not rollback any of the bound resources (Durable Object, D1, R2, KV, etc)"*
 safe because `c2f46f40` and `61a225e2` carry the same source tree (`188ec54`); `c2f46f40` differs
 only by having been minted by a `Secret Change`. A drill against genuinely different code proves
 more, but risks more — this one proved the *mechanism*, which is what Phase 5 is for.
+
+**Browser sign-in on the staging alias — done by the owner, 2026-09-08.** Signed in with an
+existing account against production Supabase; the flow completed. That is the one hop `curl`
+could not reach (check 15's limitation, unchanged since Phase 4): a POST answered `302` and the
+browser arrived authenticated, which is impossible unless `Set-Cookie` rode the redirect. It
+settles cookie issuance **on a non-production origin**, so nothing in the auth path is bound to
+the production hostname.
+
+**Correction to this phase's own checklist: signing in does not prove the KV pin.** The item
+above claimed it did. It cannot. Nothing in `src/` touches Astro's session API — `grep` for it
+returns only comments and Supabase's own `data.session`. Session state is entirely the
+`@supabase/ssr` cookie, so a sign-in never reads or writes the `SESSION` namespace. That
+namespace is bound because the adapter injects it and is **unused at runtime**, exactly as the
+`wrangler.jsonc` comment says. The pin is proved by check 17 alone — no second namespace
+auto-provisioned after `versions upload` — plus the binding line wrangler printed during upload.
+Keep the two claims apart: check 17 is the KV evidence, the browser sign-in is the cookie
+evidence, and neither substitutes for the other.
+
+A consequence to carry into Phase 6: because the namespace is unused, a previews-pin regression
+would be **silent**. It would show up as a second namespace in `kv namespace list` and in no
+user-visible behaviour at all. Check 17 is the only detector, which is why it runs after every
+first upload on a new path — including the first Workers Builds upload (check 19).
 
 **Carry-forward:** rollback reverts **code only** — not Supabase migrations, not secrets
 (E17). Safe today at zero migrations; a footgun the moment the first one exists. Keep
