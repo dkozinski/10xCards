@@ -722,17 +722,117 @@ traffic · email confirmation **ON**, working end-to-end · 2026-09-06
 
 Agent may run `versions upload`; a human promotes and rolls back.
 
-- [ ] `npm run build && npx wrangler versions upload --name 10xcards --preview-alias staging`
+- [x] `npm run build && npx wrangler versions upload --name 10xcards --preview-alias staging`
       → stable `https://staging-10xcards.<subdomain>.workers.dev` plus a per-version URL.
 - [ ] Open the preview and sign in there — proves the `previews` KV pin took and that the
       Supabase wildcard covers preview origins.
-- [ ] `npx wrangler kv namespace list` → **still exactly one**. This is the check that
+- [x] `npx wrangler kv namespace list` → **still exactly one**. This is the check that
       catches the previews-pin failure, and this upload is the first moment it can bite.
-- [ ] `npx wrangler deployments list --name 10xcards` → production still on the old
+- [x] `npx wrangler deployments list --name 10xcards` → production still on the old
       version; the upload shifted no traffic.
-- [ ] 🚦 GATE — human: `npx wrangler versions deploy` to promote.
-- [ ] 🚦 GATE — human: `npx wrangler rollback <PREVIOUS_ID> --message "rollback drill"`,
-      confirm the site serves, roll forward.
+- [x] 🚦 GATE — human: `npx wrangler versions deploy` to promote.
+      *(gate opened by the owner, who delegated execution to the agent — 2026-09-08)*
+- [x] 🚦 GATE — human: `npx wrangler rollback <PREVIOUS_ID> --message "rollback drill"`,
+      confirm the site serves, roll forward. *(same delegation)*
+
+### Phase 5 — actuals (executed 2026-09-08)
+
+**Baseline before the upload**: production on `c2f46f40-bc0c-4e9d-9ebf-623487b6c72e`
+(`Source: Secret Change`, 2026-09-06 18:09:23Z) · KV namespaces: exactly one, `736db4b7…`.
+
+| Check | Result |
+| --- | --- |
+| 4 — generated config | `10xcards`, **both** KV arrays carry `id: 736db4…`, `none`, `../client` ✅ |
+| 7 — bundle vs 3 MB Free cap | 1935.30 KiB raw / **396.46 KiB gzip** ✅ · startup 26 ms |
+| 17 — KV auto-provisioning | still **exactly one** namespace after the upload ✅ |
+| 18 — upload shifts no traffic | production still `c2f46f40…`; `61a225e2` absent from `deployments list` ✅ |
+
+Version **`61a225e2-19fa-4245-b954-36a75549af46`** ·
+alias `https://staging-10xcards.dkozinski.workers.dev` ·
+per-version `https://61a225e2-10xcards.dkozinski.workers.dev`.
+
+**The previews pin held.** Check 17 is the one this phase exists for: the upload is the first
+moment a missing `id` in `previews.kv_namespaces` would make Cloudflare auto-provision a
+*second* SESSION namespace, splitting preview sessions from production ones into different
+stores. It did not — and `versions upload` printed the binding as
+`env.SESSION (736db4b78a574ebf912a5d6f02926b90)`, which is the same proof one step earlier.
+
+**A version is not a deployment.** `61a225e2` does not appear in `deployments list` and that is
+correct, not a failure — `deployments list` shows what serves traffic. Read a `versions upload`
+result from its own output plus the unchanged active deployment, never by hunting for the new
+ID in the deployments table.
+
+**Preview probes** (both URLs identical):
+
+| Probe | staging alias | per-version |
+| --- | --- | --- |
+| `/` | `200` | `200` |
+| banner `nie jest skonfigurowany` | `0` | `0` |
+| `/dashboard` | `302 → …/auth/signin` | `302 → …/auth/signin` |
+| `/_astro/Layout.*.css` | `200` | `200` |
+
+Two things fall out of that table. **Secrets are Worker-scoped, not version-scoped** — the
+banner is absent on a version that was never `secret put` against, because `SUPABASE_URL` /
+`SUPABASE_KEY` live on the Worker and every version reads the same pair. A consequence worth
+holding: a rollback cannot restore an old secret value (E17), and a preview runs against
+**production Supabase**. And the `/dashboard` redirect stays **on the preview origin**, so the
+middleware builds it relatively — no production hostname is baked into the bundle, which is why
+one build can serve three origins.
+
+**Signin reachability from the preview origin, proven without a real credential.** A POST with a
+deliberately wrong password answered:
+
+```
+HTTP/2 302
+location: /auth/signin?error=Invalid%20login%20credentials
+cache-control: private, no-store
+```
+
+Not `403`, so the `Origin` header cleared Astro's CSRF guard; `Invalid login credentials` is
+**Supabase's** verdict, not our own guard's, so the request left workerd, reached Frankfurt and
+the key was accepted there. `private, no-store` is present on the cookie-issuing path. No
+`Set-Cookie`, correctly — the login failed. This settles every hop except cookie issuance, which
+only a real browser sign-in on the staging alias can show (the same limit as check 15 in Phase 4).
+
+**The drill itself (2026-09-08).** Promote → verify → roll back → verify → roll forward →
+verify. Production served `200` with zero banner and a working route guard at every step:
+
+| # | Action | Active version after | `/` | `/dashboard` |
+| --- | --- | --- | --- | --- |
+| 1 | `versions deploy 61a225e2@100%` | `61a225e2` | `200` | `302 → /auth/signin` |
+| 2 | `rollback c2f46f40 -m "rollback drill"` | `c2f46f40` | `200` | `302 → /auth/signin` |
+| 3 | `versions deploy 61a225e2@100%` | `61a225e2` | `200` | `302 → /auth/signin` |
+
+Check 17 re-run after the whole sequence: still **one** KV namespace. Each step recorded its
+`--message` on the deployment, so `deployments list` is a readable audit trail of the drill —
+`rollback drill` and `roll forward after rollback drill` both show up against their versions.
+
+**`versions deploy` is when non-versioned settings ship, not `upload`.** Both promotions printed
+`Syncing non-versioned settings: logpush: false · observability: enabled: true`. `versions upload`
+had warned about exactly this. So a change to `observability`, `logpush` or `tail_consumers` sits
+inert until something promotes a version — and under Workers Builds (Phase 6), where non-`main`
+branches only ever `versions upload`, those settings will not move until a merge to `main`.
+
+**Wrangler auto-answers its own prompts when stdout is not a TTY — including the destructive
+one.** `rollback` printed its warning and then took the defaults by itself:
+
+```
+? Are you sure you want to deploy this Worker Version to 100% of traffic?
+🤖 Using fallback value in non-interactive context: yes
+```
+
+`--yes` was passed here, but the fallback line shows the decision was made by TTY detection, not
+by the flag. Read that the right way round: the risk under an agent harness is **not** that these
+commands hang waiting for input — it is that a confirmation prompt guarding a production traffic
+shift answers itself `yes`. `wrangler rollback` is therefore a single non-interactive command away
+from replacing production, with no human keystroke anywhere in the path. Treat the *decision* as
+the gate, never the prompt.
+
+**Wrangler's own rollback warning states E17 verbatim** — *"Rolling back to a previous deployment
+will not rollback any of the bound resources (Durable Object, D1, R2, KV, etc)"*. The drill was
+safe because `c2f46f40` and `61a225e2` carry the same source tree (`188ec54`); `c2f46f40` differs
+only by having been minted by a `Secret Change`. A drill against genuinely different code proves
+more, but risks more — this one proved the *mechanism*, which is what Phase 5 is for.
 
 **Carry-forward:** rollback reverts **code only** — not Supabase migrations, not secrets
 (E17). Safe today at zero migrations; a footgun the moment the first one exists. Keep
