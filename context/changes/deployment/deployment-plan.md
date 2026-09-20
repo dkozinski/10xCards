@@ -869,15 +869,40 @@ pair a destructive migration with a code deploy.
 Deliberately **last**. Connecting the GitHub App means the next push to `main` deploys;
 by now everything it would deploy is known-good and already live.
 
+> **Status 2026-09-20 — the integration is live, and this file said otherwise.** Every box
+> below was empty, which reads as "not connected yet". It cost a retracted claim mid-operation:
+> an agent asserted a merge to `main` was deploy-safe, then had to withdraw it one step before
+> the merge. Boxes ticked below each name the observation backing them; boxes still open were
+> re-verified as open, not merely skipped.
+>
+> **`wrangler` cannot tell you a deploy came from Workers Builds.** It and a manual
+> `versions deploy` both print `Source: Unknown (deployment)`. Only the dashboard separates
+> them, so never answer "where did this version come from" from the CLI alone.
+>
+> **A docs-only merge still deploys.** Workers Builds does not filter by path. Both merges on
+> 2026-09-20 shipped byte-identical code — no commit after 2026-09-08 touched `src/`,
+> `wrangler.jsonc`, `package*.json` or `astro.config.mjs` — and each still produced a new
+> production version.
+
 - [ ] `astro.config.mjs`: set `site: "https://10xcards.<subdomain>.workers.dev"` —
       `sitemap()` is a silent no-op without it. One line to change when a real domain arrives.
-- [ ] Push the branch, open a PR, merge. Push all 3 stale local commits too — Workers
+      *Still open, re-verified 2026-09-20: `sitemap()` sits in `integrations`, and the file has
+      no `site` key at all. The sitemap is a no-op right now.*
+- [x] Push the branch, open a PR, merge. Push all 3 stale local commits too — Workers
       Builds builds what GitHub has, not what your machine has (E19).
-- [ ] Dashboard → Workers & Pages → `10xcards` → Settings → **Builds** → install the
+      *Done 2026-09-20 as PR #14, merged to `3e4af65`. The count was 4, not 3 (see check 1),
+      and none needed a separate push: the branch was cut on top of them, so the merge carried
+      them.*
+- [x] Dashboard → Workers & Pages → `10xcards` → Settings → **Builds** → install the
       Cloudflare **GitHub App**, scoped to `dkozinski/10xCards` only.
-- [ ] Git branch `main`; root `/`; build `npm run build`; deploy `npx wrangler deploy`;
+      *Evidenced 2026-09-20: a `Workers Builds: 10xcards` check now reports on every PR.
+      Install date not recorded — it predates this observation.*
+- [x] Git branch `main`; root `/`; build `npm run build`; deploy `npx wrangler deploy`;
       non-production branch `npx wrangler versions upload` (default — leave it, it is
       what gives every branch a free preview URL).
+      *Evidenced 2026-09-20 by behaviour, not by reading the dashboard: merging to `main`
+      produced a production version within ~60s, twice; while PR #14 sat open, production
+      stayed on `61a225e2`.*
 - [ ] **No build variables.** Both env fields are `access: "secret"` + `optional`, so
       nothing is needed at build time. Only if the build fails on Node: set
       `NODE_VERSION=22.23.2` (`.nvmrc` pins `22.14.0`; the image preinstalls 22.23.2 /
@@ -891,7 +916,14 @@ by now everything it would deploy is known-good and already live.
       `package-lock.json`: Workers Builds normally installs before the build command, but a
       missing install is exactly how E11's lockfile drift comes back. If no install appears,
       change the build command to `npm ci && npm run build`.
-- [ ] Push `main` → confirm auto-deploy.
+      *Half-confirmed 2026-09-20 and deliberately left open. PRs #14 and #15 proved
+      **production untouched** while a non-`main` branch built. The preview URL, the absence of
+      a new KV namespace, and the install step against `package-lock.json` are all only visible
+      in the build log in the dashboard, and none of them was read. Do not tick this from the
+      CLI — the CLI cannot see any of the three.*
+- [x] Push `main` → confirm auto-deploy.
+      *Confirmed twice on 2026-09-20: merge of PR #14 → version `5d5944ec` at 17:04:49Z;
+      merge of PR #15 → version `310f3ce7` at 17:07:43Z.*
 
 ### Resolving the approval conflict
 
@@ -904,6 +936,12 @@ merge.**
       enforcement. *Rulesets are free on public repos; private repos need a paid plan —
       verify this repo's visibility. If unavailable, fall back to a local `pre-push` hook
       rejecting `main`.*
+      > **Still open, re-verified 2026-09-20** — `gh api repos/dkozinski/10xCards/branches/main/protection`
+      > returns `404 Branch not protected`. This is now the sharpest hole in the setup, and it
+      > got sharper the moment auto-deploy went live: Workers Builds deploys `main` and ignores
+      > GitHub check status, so **today nothing stands between a bad merge and production** —
+      > not CI, not a review, not a convention. The repo is public, so rulesets are free. Until
+      > this lands, every merge to `main` is an unreviewed production release.
 - [ ] Amend the `infrastructure.md` Approval bullet: **merging to `main` is the
       production promote.** The agent's unattended list survives — it may push feature
       branches (→ `versions upload`, no traffic shift) but may not merge.
@@ -921,8 +959,16 @@ it as a documented option, not the default.
 
 Free budget: 3,000 build min/month, 1 concurrent build, 20-min timeout.
 
-**Actuals** *(fill in)*: GitHub App install date · build settings as configured · first
-auto-deploy version ID
+**Actuals** *(observed 2026-09-20; the dashboard was never opened, so everything here is
+inferred from behaviour and from GitHub's check API)*:
+
+| | |
+| --- | --- |
+| GitHub App install date | **not recorded** — predates the observation; only the dashboard can say |
+| Build settings as configured | not read directly. Behaviour matches the intent above: `main` → production deploy, non-`main` → no production change |
+| First auto-deploy version ID seen | `5d5944ec-a50b-4028-a4be-e98eb8602aaf`, `2026-09-20T17:04:49Z`, from merging PR #14. **Not necessarily the first ever** — earlier auto-deploys may exist between the install and this date |
+| Production at time of writing | `310f3ce7-ee4c-4188-a0b5-348d57bef77b`, `2026-09-20T17:07:43Z`, from merging PR #15 |
+| Phase 6 overall | **open** — branch protection is the blocker, see above |
 
 ---
 
