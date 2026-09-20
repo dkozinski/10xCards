@@ -111,3 +111,13 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 ## CI
 
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to `main`. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+
+## Documentation & Note-taking
+
+When generating or updating markdown notes (e.g., in the Obsidian vault), follow these strict formatting rules to ensure they are beautiful, scannable, and highly readable:
+- **No text blobs:** Never output massive, unstructured walls of text. Break down information.
+- **Use callouts:** Liberally use GitHub-style markdown callouts (`> [!NOTE]`, `> [!IMPORTANT]`, `> [!TIP]`, `> [!WARNING]`) to highlight key definitions, rules, or core examples.
+- **Clear hierarchy:** Use Headings (`##`, `###`) to separate logical sections.
+- **Bullet points over paragraphs:** Whenever listing features, options, or consequences, use bulleted or numbered lists.
+- **Rich examples:** Always provide concrete, real-world examples (e.g., specific to the `10xCards` app) alongside dry definitions.
+- **Bold key terms:** Use **bold text** to make important concepts stand out when scanning the document.
