@@ -1,0 +1,15 @@
+# Local workerd runtime (npx wrangler dev).
+#
+# Copy to .dev.vars and fill in. .dev.vars is gitignored; this template is not.
+# `npm run dev` / `npm run build` do NOT need these — both astro:env fields are
+# access: "secret" + optional, so they resolve at runtime, never at build time.
+#
+# Point at the CLOUD Supabase project, not a local stack: a Worker cannot reach
+# http://127.0.0.1:54321, and a localhost URL in a deployed secret fails silently.
+
+SUPABASE_URL=https://<project-ref>.supabase.co
+
+# Dashboard -> Project Settings -> API Keys -> "publishable"
+# MUST start with sb_publishable_  — it honours RLS and is safe at the edge.
+# NEVER sb_secret_ or service_role: those bypass RLS entirely.
+SUPABASE_KEY=sb_publishable_<...>

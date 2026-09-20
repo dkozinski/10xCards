@@ -9,11 +9,14 @@
     "astro": "astro",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "deploy:preview": "astro build && wrangler versions upload",
+    "deploy:promote": "wrangler versions deploy",
+    "deploy:rollback": "wrangler rollback"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
-    "@astrojs/cloudflare": "^13.5.0",
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/react": "^5.0.4",
     "@astrojs/sitemap": "^3.7.2",
     "@eslint/config-helpers": "^0.6.0",
