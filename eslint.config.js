@@ -70,6 +70,8 @@ const astroConfig = tseslint.config({
 
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
+  // Supabase CLI scratch space (ignored by the nested supabase/.gitignore, which includeIgnoreFile does not read)
+  { ignores: ["supabase/.temp/"] },
   baseConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

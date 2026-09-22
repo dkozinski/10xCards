@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-22
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -46,7 +46,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 
 | ID    | Change ID                  | Outcome (user can …)                                             | Prerequisites | PRD refs                                                              | Status   |
 | ----- | -------------------------- | ---------------------------------------------------------------- | ------------- | --------------------------------------------------------------------- | -------- |
-| F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | ready    |
+| F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | in-progress |
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | proposed |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | ready    |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | blocked  |
@@ -89,7 +89,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Deliberately scoped to the deck itself — one owned store, its access rules, and its types. Scheduling state arrives in S-05 and generation bookkeeping (if any) in S-03, so neither is pre-built here. Sequenced first because every deck slice reads and writes through it and because retrofitting per-operation access rules onto an existing store is far more error-prone than writing them once, up front. The named risk is the opposite failure: letting this grow into "the data layer" — if its outcome stops being checkable by one two-account read test, it has overrun.
-- **Status:** ready
+- **Status:** in-progress
 
 ## Slices
 
