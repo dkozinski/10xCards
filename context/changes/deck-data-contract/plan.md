@@ -308,25 +308,25 @@ Link the CLI to the cloud project and push the migration. This is the only step 
 
 #### Automated
 
-- [x] 2.1 Types regenerate cleanly
-- [x] 2.2 Regeneration is stable
-- [x] 2.3 Type check passes
-- [x] 2.4 Lint passes
-- [x] 2.5 Build passes
+- [x] 2.1 Types regenerate cleanly — f732867
+- [x] 2.2 Regeneration is stable — f732867
+- [x] 2.3 Type check passes — f732867
+- [x] 2.4 Lint passes — f732867
+- [x] 2.5 Build passes — f732867
 
 #### Manual
 
-- [x] 2.6 FlashcardDto shows expected fields
+- [x] 2.6 FlashcardDto shows expected fields — f732867
 
 ### Phase 3: Cloud rollout (manual gate)
 
 #### Automated
 
-- [ ] 3.1 Dry run lists exactly one pending migration
-- [ ] 3.2 Migration recorded on both sides
-- [ ] 3.3 Cloud schema matches migrations
+- [x] 3.1 Dry run lists exactly one pending migration
+- [x] 3.2 Migration recorded on both sides
+- [x] 3.3 Cloud schema matches migrations
 
 #### Manual
 
-- [ ] 3.4 Cloud dashboard shows RLS enabled and 8 policies
-- [ ] 3.5 Live app still works
+- [x] 3.4 Cloud dashboard shows RLS enabled and 8 policies
+- [x] 3.5 Live app still works
