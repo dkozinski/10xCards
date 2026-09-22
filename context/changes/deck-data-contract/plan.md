@@ -322,11 +322,11 @@ Link the CLI to the cloud project and push the migration. This is the only step 
 
 #### Automated
 
-- [x] 3.1 Dry run lists exactly one pending migration
-- [x] 3.2 Migration recorded on both sides
-- [x] 3.3 Cloud schema matches migrations
+- [x] 3.1 Dry run lists exactly one pending migration — 8a2bafd
+- [x] 3.2 Migration recorded on both sides — 8a2bafd
+- [x] 3.3 Cloud schema matches migrations — 8a2bafd
 
 #### Manual
 
-- [x] 3.4 Cloud dashboard shows RLS enabled and 8 policies
-- [x] 3.5 Live app still works
+- [x] 3.4 Cloud dashboard shows RLS enabled and 8 policies — 8a2bafd
+- [x] 3.5 Live app still works — 8a2bafd
