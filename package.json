@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "db:types": "supabase gen types typescript --local --schema public > src/db/database.types.ts && prettier --write src/db/database.types.ts",
     "deploy:preview": "astro build && wrangler versions upload",
     "deploy:promote": "wrangler versions deploy",
     "deploy:rollback": "wrangler rollback"

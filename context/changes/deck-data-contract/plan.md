@@ -294,29 +294,29 @@ Link the CLI to the cloud project and push the migration. This is the only step 
 
 #### Automated
 
-- [x] 1.1 Local stack starts
-- [x] 1.2 Migration applies on the local stack
-- [x] 1.3 Isolation suite passes
-- [x] 1.4 Lint passes
+- [x] 1.1 Local stack starts — 551d901
+- [x] 1.2 Migration applies on the local stack — 551d901
+- [x] 1.3 Isolation suite passes — 551d901
+- [x] 1.4 Lint passes — 551d901
 
 #### Manual
 
-- [x] 1.5 Local Studio shows RLS enabled and 8 policies
-- [x] 1.6 Owner can explain each policy
+- [x] 1.5 Local Studio shows RLS enabled and 8 policies — 551d901
+- [x] 1.6 Owner can explain each policy — 551d901
 
 ### Phase 2: Generated types and typed client
 
 #### Automated
 
-- [ ] 2.1 Types regenerate cleanly
-- [ ] 2.2 Regeneration is stable
-- [ ] 2.3 Type check passes
-- [ ] 2.4 Lint passes
-- [ ] 2.5 Build passes
+- [x] 2.1 Types regenerate cleanly
+- [x] 2.2 Regeneration is stable
+- [x] 2.3 Type check passes
+- [x] 2.4 Lint passes
+- [x] 2.5 Build passes
 
 #### Manual
 
-- [ ] 2.6 FlashcardDto shows expected fields
+- [x] 2.6 FlashcardDto shows expected fields
 
 ### Phase 3: Cloud rollout (manual gate)
 
