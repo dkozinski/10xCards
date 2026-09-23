@@ -13,8 +13,8 @@
 
 | Construct | State |
 | --- | --- |
-| Milestone `M-1: Paste-to-review loop` (#1) | open — 13 open / 0 closed |
-| Issues #1–#13 | all open |
+| Milestone `M-1: Paste-to-review loop` (#1) | open — 12 open / 1 closed |
+| Issues #1–#13 | #7 closed (F-01 done 2026-09-23), rest open |
 | 9 custom labels | created |
 | 9 native "blocked by" dependencies | created |
 | Projects board "10xCards Roadmap" | **not created yet** — token now has `project` scope; step pending |
@@ -38,9 +38,9 @@
 
 | Issue | Roadmap ID | Change ID | Labels | Blocked by |
 | --- | --- | --- | --- | --- |
-| #7 | F-01 | `deck-data-contract` | `type:foundation` `status:ready` `stream:A-deck` | — |
+| #7 | F-01 | `deck-data-contract` | `type:foundation` `stream:A-deck` — **closed** | — |
 | #8 | S-02 | `ai-proposals-from-text` | `type:slice` `status:ready` `stream:B-ai` | — |
-| #9 | S-01 | `manual-card-and-deck` | `type:slice` `status:proposed` `stream:A-deck` | #7 |
+| #9 | S-01 | `manual-card-and-deck` | `type:slice` `status:ready` `stream:A-deck` | #7 (closed) |
 | #10 | S-03 | `review-and-save-proposals` | `type:slice` `status:blocked` `stream:B-ai` `north-star` | #9, #8, #2, #3 |
 | #11 | S-04 | `edit-and-delete-cards` | `type:slice` `status:proposed` `stream:A-deck` | #9 |
 | #12 | S-05 | `srs-review-session` | `type:slice` `status:proposed` `stream:C-review` | #9 |
@@ -75,8 +75,9 @@ graph LR
 ```
 
 > [!TIP]
-> **Where to start:** #7 (F-01) and #8 (S-02) have no blockers and are labelled `status:ready`. To unblock the
-> north star (#10) you have to **answer** #2 and #3. Those are product decisions, not code.
+> **Where to start:** #9 (S-01) and #8 (S-02) have no open blockers and are labelled `status:ready`
+> (#7, F-01, is closed). To unblock the north star (#10) you have to **answer** #2 and #3. Those are
+> product decisions, not code.
 
 ## Label vocabulary
 
@@ -131,9 +132,10 @@ The roadmap's Backlog Handoff says issues **must not duplicate the detailed road
 > Nothing syncs automatically. Labels and roadmap `Status` fields are updated **by hand**. Closing an
 > issue is the only thing GitHub propagates by itself: it clears the "Blocked" badge on the dependents.
 
-**Example (S-01):** once #7 (F-01) is closed, #9 loses its "Blocked" badge. Run
-`gh issue edit 9 --remove-label status:proposed --add-label status:ready`, set S-01 `Status: ready` in
-roadmap.md, then `/10x-new manual-card-and-deck`.
+**Example (S-01, done 2026-09-23):** #7 (F-01) closed via `Closes #7` in PR #17, so #9 lost its
+"Blocked" badge. Then: `gh issue edit 9 --remove-label status:proposed --add-label status:ready`, drop
+`status:*` from the closed #7, tick its "Done when" boxes, set S-01 `Status: ready` in roadmap.md, and
+mirror the same in Linear (see `tasks-linear.md`). Next: `/10x-new manual-card-and-deck`.
 
 ## `gh` cheatsheet
 
@@ -162,8 +164,8 @@ gh issue comment 2 --body "Decision: …" && gh issue close 2
 - **Projects board not created.** The planned setup is a user-level Project "10xCards Roadmap" linked to
   the repo. Its built-in **Status** column (Todo / In Progress / Done) would track execution, and a custom
   single-select **Stream** field would group items. All 13 issues would be added to it.
-- **`roadmap.md` is untracked in git.** Issue bodies cite its path as plain text, because a blob link
-  would 404 until the file is committed.
+- **Issue bodies cite `roadmap.md` as plain text.** When they were written the file was untracked and a
+  blob link would have 404'd. It is committed now, so links could be added, but nobody has done it.
 - **The generator script is not in the repo.** It was a one-off run from a session scratchpad directory.
   Future milestones are migrated fresh using the formats in this file.
 

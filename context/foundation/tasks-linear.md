@@ -30,9 +30,9 @@
 
 **Workflow status** (Linear-only; GitHub has just open/closed):
 
-- `Todo` — `readiness/ready` items (F-01, S-02) and the two blocking questions (Q-2, Q-3)
+- `Todo` — `readiness/ready` items (S-01, S-02) and the two blocking questions (Q-2, Q-3)
 - `Backlog` — everything else
-- `Done` — equivalent of a closed GitHub issue
+- `Done` — equivalent of a closed GitHub issue (F-01 since 2026-09-23; its `readiness` label is removed)
 
 ## Issue inventory
 
@@ -44,9 +44,9 @@
 | DAW-8 | #4 | Q-4 | `question` | — |
 | DAW-9 | #5 | Q-5 | `question` | — |
 | DAW-10 | #6 | Q-6 | `question` | — |
-| DAW-11 | #7 | F-01 | `foundation` `ready` `A-deck` | — |
+| DAW-11 | #7 | F-01 | `foundation` `A-deck` — **Done** | — |
 | DAW-12 | #8 | S-02 | `slice` `ready` `B-ai` | — |
-| DAW-13 | #9 | S-01 | `slice` `proposed` `A-deck` | DAW-11 |
+| DAW-13 | #9 | S-01 | `slice` `ready` `A-deck` | DAW-11 (Done) |
 | DAW-14 | #10 | S-03 | `slice` `blocked` `B-ai` `north-star` | DAW-13, DAW-12, DAW-6, DAW-7 |
 | DAW-15 | #11 | S-04 | `slice` `proposed` `A-deck` | DAW-13 |
 | DAW-16 | #12 | S-05 | `slice` `proposed` `C-review` | DAW-13 |

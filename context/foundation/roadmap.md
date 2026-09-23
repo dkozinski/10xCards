@@ -47,7 +47,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | ID    | Change ID                  | Outcome (user can …)                                             | Prerequisites | PRD refs                                                              | Status   |
 | ----- | -------------------------- | ---------------------------------------------------------------- | ------------- | --------------------------------------------------------------------- | -------- |
 | F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | done |
-| S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | proposed |
+| S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | ready    |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | ready    |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | blocked  |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | proposed |
@@ -103,7 +103,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is the smallest slice that crosses every layer at once — store, access rules, server route, and screen — which is exactly why it goes first under a low-complexity goal: it teaches the whole stack on material that carries no product risk. Sequenced before the AI work so that when generated proposals arrive in S-03 there is already a proven place to put them. The risk of skipping it is that the first write to the database happens inside the hardest slice, where a data-ownership bug would be indistinguishable from a generation bug. PRD § Non-Goals excludes search and filtering, so browsing is a plain list.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-02: See AI proposals drafted from pasted text
 
@@ -177,7 +177,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | Roadmap ID | Issue | Change ID                  | Suggested issue title                                        | Ready for `/10x-plan` | Notes |
 | ---------- | ----- | -------------------------- | ------------------------------------------------------------ | --------------------- | ----- |
 | F-01       | #7    | `deck-data-contract`       | Establish the owner-scoped flashcard store and its types      | yes                   | Highest fan-out: unlocks five items |
-| S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | no                    | Waits on F-01 |
+| S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | yes                   | F-01 done 2026-09-23 |
 | S-02       | #8    | `ai-proposals-from-text`   | Draft flashcard proposals from pasted text                    | yes                   | No prerequisites; can run in parallel with F-01 |
 | S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | no                    | Blocked on PRD Open Questions 2 and 3 |
 | S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | no                    | Waits on S-01 |
