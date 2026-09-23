@@ -74,7 +74,7 @@ Stand up the local Supabase stack, write the `flashcards` migration, and prove i
 
 **File**: `supabase/migrations/<timestamp>_create_flashcards.sql` (created via `npx supabase migration new create_flashcards`)
 
-**Intent**: Create the owner-scoped card store with its constraints, index, timestamp trigger and 8 RLS policies.
+**Intent**: Create the owner-scoped card store with its constraints, index, explicit grants and 8 RLS policies.
 
 **Contract**:
 - Table `public.flashcards`:
@@ -107,7 +107,7 @@ Stand up the local Supabase stack, write the `flashcards` migration, and prove i
 - As B: `delete` of A's card removes nothing (the row still exists).
 - As B: `insert` with `user_id` = A throws `42501`.
 - As A: `update` of own card setting `user_id` = B throws `42501`.
-- As anon: `select` returns 0 rows and `insert` throws `42501`.
+- As anon: `select` and `insert` both throw `42501` (anon holds no table privileges, so it is refused before RLS is consulted; the deny policies are the second layer).
 - As A, inserting their own card: a blank `front` (`'   '`) throws `23514`, and a 201-character `front` throws `23514`. These must run as the owner; as anon or with a foreign `user_id`, RLS rejects the row first with `42501` and the CHECK is never reached.
 - As `postgres`: deleting A from `auth.users` leaves 0 cards with A's `user_id`.
 
@@ -285,6 +285,15 @@ Link the CLI to the cloud project and push the migration. This is the only step 
 - PRD: `context/foundation/prd.md` § Access Control, NFR data isolation, NFR durability
 - Deployment constraints: `context/changes/deployment/deployment-plan.md` § P4, risk register
 - Client to type: `src/lib/supabase.ts:9`
+
+## Deviations
+
+Recorded after the fact by the implementation review (`reviews/impl-review.md`, F1/F2).
+
+- **Explicit grants (Phase 1, 551d901).** The migration grants `select, insert, update, delete` to `authenticated`. Without it the owner could not reach their own cards on the local stack. The original contract had no grant statements.
+- **Second migration `20260922194808_flashcards_explicit_grants.sql` (Phase 3, 8a2bafd).** The cloud auto-granted the table to `anon` and `service_role` while the local stack did not, so `db diff --linked` was not empty. This migration revokes everything from `anon` and grants CRUD to `service_role`. Both migrations were pushed together, so Progress 3.1 ("exactly one pending migration") actually listed two.
+- **Anon is denied by privileges, not only by RLS.** Consequence of the grants: anon `select` raises `42501` instead of returning 0 rows. The test asserts that; line 110 was updated to match.
+- **Third migration `20260923181722_flashcards_tighten_grants.sql` (post-review fix, F1).** Default privileges still gave `authenticated` and `service_role` `TRUNCATE`, `REFERENCES` and `TRIGGER`. RLS does not govern `TRUNCATE`. The migration resets both roles to exactly CRUD, and three `table_privs_are` assertions lock it in (suite 17 → 20; review F3 then added a role × operation policy check, 21). The comment in `20260922190157` claiming the opposite is left as-is, because applied migrations are not rewritten.
 
 ## Progress
 

@@ -13,7 +13,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(21);
 
 -- fixtures (as postgres)
 insert into auth.users (id, email) values
@@ -37,6 +37,34 @@ select is(
   (select count(*)::int from pg_policies where schemaname = 'public' and tablename = 'flashcards' and cmd = 'ALL'),
   0,
   'no policy uses FOR ALL'
+);
+
+select bag_eq(
+  $$ select r::text, cmd from pg_policies, unnest(roles) as r
+     where schemaname = 'public' and tablename = 'flashcards' $$,
+  $$ values ('authenticated', 'SELECT'), ('authenticated', 'INSERT'),
+            ('authenticated', 'UPDATE'), ('authenticated', 'DELETE'),
+            ('anon', 'SELECT'), ('anon', 'INSERT'),
+            ('anon', 'UPDATE'), ('anon', 'DELETE') $$,
+  'exactly one policy per role and operation'
+);
+
+select table_privs_are(
+  'public', 'flashcards', 'authenticated',
+  array['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+  'authenticated has exactly CRUD on flashcards (no TRUNCATE/REFERENCES/TRIGGER)'
+);
+
+select table_privs_are(
+  'public', 'flashcards', 'service_role',
+  array['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+  'service_role has exactly CRUD on flashcards'
+);
+
+select table_privs_are(
+  'public', 'flashcards', 'anon',
+  array[]::text[],
+  'anon has no privileges on flashcards'
 );
 
 -- as user A: create and see an own card
