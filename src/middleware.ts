@@ -1,7 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 import { createClient } from "@/lib/supabase";
 
-const PROTECTED_ROUTES = ["/dashboard"];
+const PROTECTED_ROUTES = ["/dashboard", "/deck"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const supabase = createClient(context.request.headers, context.cookies);
@@ -15,7 +15,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.user = null;
   }
 
-  const isProtected = PROTECTED_ROUTES.some((route) => context.url.pathname.startsWith(route));
+  // "/deck" guards "/deck" and "/deck/…", not unrelated siblings like "/decks"
+  const { pathname } = context.url;
+  const isProtected = PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
   const response = isProtected && !context.locals.user ? context.redirect("/auth/signin") : await next();
 
   // Every response leaving this Worker is treated as session-bearing (E25).

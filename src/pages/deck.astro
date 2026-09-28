@@ -1,0 +1,112 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+import NewFlashcardForm from "@/components/deck/NewFlashcardForm";
+import { pageWindow, parsePage } from "@/lib/pagination";
+import { listFlashcards } from "@/lib/services/flashcards";
+import { createClient } from "@/lib/supabase";
+import type { FlashcardDto } from "@/types";
+
+const page = parsePage(Astro.url.searchParams.get("page"));
+const pageHref = (n: number) => (n === 1 ? "/deck" : `/deck?page=${n}`);
+
+let cards: FlashcardDto[] = [];
+let total = 0;
+let loadFailed = false;
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (supabase) {
+  try {
+    // from/to depend only on the page number, not on the total
+    const { from, to } = pageWindow(page, 0);
+    ({ items: cards, total } = await listFlashcards(supabase, { from, to }));
+  } catch (error) {
+    const { code, message } = error as { code?: string; message?: string };
+    // eslint-disable-next-line no-console
+    console.error("listFlashcards failed", { code, message });
+    loadFailed = true;
+  }
+} else {
+  loadFailed = true;
+}
+
+const { lastPage, hasNewer, hasOlder } = pageWindow(page, total);
+
+// A stale "Older" link must not show an empty list that looks like lost cards.
+if (!loadFailed && page > lastPage) {
+  return Astro.redirect(pageHref(lastPage));
+}
+---
+
+<Layout title="My deck">
+  <div class="bg-cosmic min-h-screen p-4">
+    <div class="mx-auto w-full max-w-2xl text-white">
+      <Topbar />
+
+      <section class="mb-6 rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl">
+        <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+          New flashcard
+        </h1>
+        <NewFlashcardForm client:load />
+      </section>
+
+      <section class="rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl">
+        <div class="mb-4 flex items-baseline justify-between">
+          <h2 class="text-xl font-semibold">My deck</h2>
+          {
+            !loadFailed && (
+              <span class="text-sm text-blue-100/60">
+                {total} {total === 1 ? "card" : "cards"}
+              </span>
+            )
+          }
+        </div>
+
+        {
+          loadFailed ? (
+            <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+              Your deck could not be loaded. Refresh the page to try again.
+            </p>
+          ) : cards.length === 0 ? (
+            <p class="text-sm text-blue-100/60">No flashcards yet. Write your first one above.</p>
+          ) : (
+            <ul class="space-y-3">
+              {cards.map((card) => (
+                <li class="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <p class="font-medium break-words whitespace-pre-wrap">{card.front}</p>
+                  <p class="mt-2 border-t border-white/10 pt-2 text-sm break-words whitespace-pre-wrap text-blue-100/80">
+                    {card.back}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        {
+          !loadFailed && lastPage > 1 && (
+            <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Deck pages">
+              {hasNewer ? (
+                <a href={pageHref(page - 1)} class="text-purple-300 hover:text-purple-100 hover:underline">
+                  ← Newer
+                </a>
+              ) : (
+                <span />
+              )}
+              <span class="text-blue-100/60">
+                Page {page} of {lastPage}
+              </span>
+              {hasOlder ? (
+                <a href={pageHref(page + 1)} class="text-purple-300 hover:text-purple-100 hover:underline">
+                  Older →
+                </a>
+              ) : (
+                <span />
+              )}
+            </nav>
+          )
+        }
+      </section>
+    </div>
+  </div>
+</Layout>
