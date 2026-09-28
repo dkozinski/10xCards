@@ -304,16 +304,16 @@ None. No schema change. Merging to `main` deploys to production through Workers 
 
 #### Automated
 
-- [x] 3.1 `npm test` passes
-- [x] 3.2 `npm run lint` passes
-- [x] 3.3 `npm run build` passes
+- [x] 3.1 `npm test` passes — ea9b453
+- [x] 3.2 `npm run lint` passes — ea9b453
+- [x] 3.3 `npm run build` passes — ea9b453
 
 #### Manual
 
-- [x] 3.4 Signed-out `/deck` redirects to sign-in
-- [x] 3.5 Saved card appears at top of page 1
-- [x] 3.6 Invalid input shows field error and keeps text
-- [x] 3.7 51 cards give two pages; out-of-range page redirects
-- [x] 3.8 Second account sees none of the first account's cards
-- [x] 3.9 Cards survive sign-out and a different browser
+- [x] 3.4 Signed-out `/deck` redirects to sign-in — ea9b453
+- [x] 3.5 Saved card appears at top of page 1 — ea9b453
+- [x] 3.6 Invalid input shows field error and keeps text — ea9b453
+- [x] 3.7 51 cards give two pages; out-of-range page redirects — ea9b453
+- [x] 3.8 Second account sees none of the first account's cards — ea9b453
+- [x] 3.9 Cards survive sign-out and a different browser — ea9b453
 - [ ] 3.10 Production smoke check after merge
