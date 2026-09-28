@@ -47,11 +47,11 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | ID    | Change ID                  | Outcome (user can …)                                             | Prerequisites | PRD refs                                                              | Status   |
 | ----- | -------------------------- | ---------------------------------------------------------------- | ------------- | --------------------------------------------------------------------- | -------- |
 | F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | done |
-| S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | in-progress |
+| S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | ready    |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | blocked  |
-| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | proposed |
-| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | proposed |
+| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | ready    |
+| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
 
 ## Streams
@@ -103,7 +103,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is the smallest slice that crosses every layer at once — store, access rules, server route, and screen — which is exactly why it goes first under a low-complexity goal: it teaches the whole stack on material that carries no product risk. Sequenced before the AI work so that when generated proposals arrive in S-03 there is already a proven place to put them. The risk of skipping it is that the first write to the database happens inside the hardest slice, where a data-ownership bug would be indistinguishable from a generation bug. PRD § Non-Goals excludes search and filtering, so browsing is a plain list.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: See AI proposals drafted from pasted text
 
@@ -143,7 +143,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - When a saved card's text is edited, is its grade history kept or reset? (PRD Open Question 4) — Owner: downstream decision, tied to the scheduling algorithm chosen in S-05. Block: no.
 - **Risk:** Small and self-contained, which is why it sits here rather than competing with S-03 for attention. The open question does not block it: until S-05 lands there is no grade history to preserve or reset, so this slice can ship its edit path and the question resurfaces — with an answer available — inside S-05. Deleting a card that a later review session might hold a reference to is the one place this slice touches the reliability guardrail, and it is the reason deletion is specified here rather than assumed.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-05: Run a review session
 
@@ -157,7 +157,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Which off-the-shelf scheduling algorithm, and what per-card state does it require the deck to carry? — Owner: downstream decision at plan time. Block: no.
   - Resolves PRD Open Question 4 (edit versus grade history) as a side effect of the algorithm choice — Owner: downstream. Block: no.
 - **Risk:** The PRD makes two absolute promises about this slice — progress is never lost and a card belonging to someone else, or already deleted, is never shown — and the repository currently has no automated way to demonstrate either. That gap is the sharpest risk in the milestone, and it is why the deck's access rules are settled back in F-01 rather than here. This slice also extends the deck's shape with scheduling state, which is deliberate: that state is introduced at the moment something finally uses it, not earlier. A custom algorithm is explicitly a Non-Goal.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-06: Delete the account and everything in it
 
@@ -177,11 +177,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | Roadmap ID | Issue | Change ID                  | Suggested issue title                                        | Ready for `/10x-plan` | Notes |
 | ---------- | ----- | -------------------------- | ------------------------------------------------------------ | --------------------- | ----- |
 | F-01       | #7    | `deck-data-contract`       | Establish the owner-scoped flashcard store and its types      | yes                   | Highest fan-out: unlocks five items |
-| S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | yes                   | F-01 done 2026-09-23 |
+| S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | yes                   | Done 2026-09-28 (PR #20) |
 | S-02       | #8    | `ai-proposals-from-text`   | Draft flashcard proposals from pasted text                    | yes                   | No prerequisites; can run in parallel with F-01 |
 | S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | no                    | Blocked on PRD Open Questions 2 and 3 |
-| S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | no                    | Waits on S-01 |
-| S-05       | #12   | `srs-review-session`       | Run a scheduled review session over the deck                  | no                    | Waits on S-01; picks the scheduling algorithm |
+| S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | yes                   | S-01 done 2026-09-28 |
+| S-05       | #12   | `srs-review-session`       | Run a scheduled review session over the deck                  | yes                   | S-01 done 2026-09-28; picks the scheduling algorithm |
 | S-06       | #13   | `account-and-data-deletion`| Delete the account and all of its data                        | no                    | Waits on S-01 and S-05 |
 
 This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It should be compact enough to copy into issues, but it must not duplicate the detailed roadmap body.
@@ -217,3 +217,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 (Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived.)
 
 - **F-01: (foundation) a flashcard store exists that belongs to exactly one account, with per-operation access rules and typed shapes the rest of the app can build on — no user-visible change.** — Archived 2026-09-23 → `context/archive/2026-09-22-deck-data-contract/`. Lesson: —.
+- **S-01: The user can write a flashcard themselves and see it in their own deck, which survives logging out and coming back on another machine.** — Archived 2026-09-28 → `context/archive/2026-09-28-manual-card-and-deck/`. Lesson: —.
