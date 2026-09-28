@@ -14,6 +14,10 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   adapter: cloudflare(),
+  // Already Astro's default; stated because the cookie-authenticated JSON routes
+  // (e.g. POST /api/flashcards) rely on it: request.json() ignores Content-Type,
+  // so a cross-site text/plain POST is stopped only by this origin check.
+  security: { checkOrigin: true },
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
