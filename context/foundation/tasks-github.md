@@ -13,8 +13,8 @@
 
 | Construct | State |
 | --- | --- |
-| Milestone `M-1: Paste-to-review loop` (#1) | open — 12 open / 1 closed |
-| Issues #1–#13 | #7 closed (F-01 done 2026-09-23), rest open |
+| Milestone `M-1: Paste-to-review loop` (#1) | open — 11 open / 2 closed |
+| Issues #1–#13 | #7 closed (F-01 done 2026-09-23), #9 closed (S-01 done 2026-09-28), rest open |
 | 9 custom labels | created |
 | 9 native "blocked by" dependencies | created |
 | Projects board "10xCards Roadmap" | **not created yet** — token now has `project` scope; step pending |
@@ -40,11 +40,11 @@
 | --- | --- | --- | --- | --- |
 | #7 | F-01 | `deck-data-contract` | `type:foundation` `stream:A-deck` — **closed** | — |
 | #8 | S-02 | `ai-proposals-from-text` | `type:slice` `status:ready` `stream:B-ai` | — |
-| #9 | S-01 | `manual-card-and-deck` | `type:slice` `status:ready` `stream:A-deck` | #7 (closed) |
-| #10 | S-03 | `review-and-save-proposals` | `type:slice` `status:blocked` `stream:B-ai` `north-star` | #9, #8, #2, #3 |
-| #11 | S-04 | `edit-and-delete-cards` | `type:slice` `status:proposed` `stream:A-deck` | #9 |
-| #12 | S-05 | `srs-review-session` | `type:slice` `status:proposed` `stream:C-review` | #9 |
-| #13 | S-06 | `account-and-data-deletion` | `type:slice` `status:proposed` `stream:C-review` | #9, #12 |
+| #9 | S-01 | `manual-card-and-deck` | `type:slice` `stream:A-deck` — **closed** | #7 (closed) |
+| #10 | S-03 | `review-and-save-proposals` | `type:slice` `status:blocked` `stream:B-ai` `north-star` | #9 (closed), #8, #2, #3 |
+| #11 | S-04 | `edit-and-delete-cards` | `type:slice` `status:ready` `stream:A-deck` | #9 (closed) |
+| #12 | S-05 | `srs-review-session` | `type:slice` `status:ready` `stream:C-review` | #9 (closed) |
+| #13 | S-06 | `account-and-data-deletion` | `type:slice` `status:proposed` `stream:C-review` | #9 (closed), #12 |
 
 | Issue | Question | Blocks | Blocking? |
 | --- | --- | --- | --- |
@@ -75,9 +75,9 @@ graph LR
 ```
 
 > [!TIP]
-> **Where to start:** #9 (S-01) and #8 (S-02) have no open blockers and are labelled `status:ready`
-> (#7, F-01, is closed). To unblock the north star (#10) you have to **answer** #2 and #3. Those are
-> product decisions, not code.
+> **Where to start:** #8 (S-02), #11 (S-04) and #12 (S-05) have no open blockers and are labelled
+> `status:ready` (#7 F-01 and #9 S-01 are closed). To unblock the north star (#10) you have to **answer**
+> #2 and #3. Those are product decisions, not code.
 
 ## Label vocabulary
 
@@ -136,6 +136,11 @@ The roadmap's Backlog Handoff says issues **must not duplicate the detailed road
 "Blocked" badge. Then: `gh issue edit 9 --remove-label status:proposed --add-label status:ready`, drop
 `status:*` from the closed #7, tick its "Done when" boxes, set S-01 `Status: ready` in roadmap.md, and
 mirror the same in Linear (see `tasks-linear.md`). Next: `/10x-new manual-card-and-deck`.
+
+**Example (S-04 / S-05, unblocked 2026-09-28):** PR #20 (S-01) had no `Closes #9`, so #9 was closed by
+hand after the production smoke check, with a comment linking the PR and the archive. Then #11 and #12:
+`status:proposed` → `status:ready` and their "Ready for `/10x-plan`" field updated. #13 stays
+`status:proposed` because it still waits on #12. Lesson: put `Closes #N` in the slice PR.
 
 ## `gh` cheatsheet
 
