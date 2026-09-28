@@ -316,4 +316,4 @@ None. No schema change. Merging to `main` deploys to production through Workers 
 - [x] 3.7 51 cards give two pages; out-of-range page redirects — ea9b453
 - [x] 3.8 Second account sees none of the first account's cards — ea9b453
 - [x] 3.9 Cards survive sign-out and a different browser — ea9b453
-- [ ] 3.10 Production smoke check after merge
+- [x] 3.10 Production smoke check after merge — d61d0ac
