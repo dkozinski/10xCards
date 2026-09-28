@@ -277,28 +277,28 @@ None. No schema change. Merging to `main` deploys to production through Workers 
 
 #### Automated
 
-- [x] 1.1 `npm test` passes: schema boundaries and trimming
-- [x] 1.2 `npm test` passes: `apiError` per code
-- [x] 1.3 `npm test` passes: `pageWindow` and `parsePage`
-- [x] 1.4 `npm run lint` passes
-- [x] 1.5 `npm run build` passes
+- [x] 1.1 `npm test` passes: schema boundaries and trimming — 906a352
+- [x] 1.2 `npm test` passes: `apiError` per code — 906a352
+- [x] 1.3 `npm test` passes: `pageWindow` and `parsePage` — 906a352
+- [x] 1.4 `npm run lint` passes — 906a352
+- [x] 1.5 `npm run build` passes — 906a352
 
 #### Manual
 
-- [ ] 1.6 CI on the PR runs the new test step green
+- [x] 1.6 CI on the PR runs the new test step green — 906a352
 
 ### Phase 2: Flashcard service and `POST /api/flashcards`
 
 #### Automated
 
-- [ ] 2.1 `npm test` passes, including all six route branches
-- [ ] 2.2 `npm run lint` passes
-- [ ] 2.3 `npm run build` passes
-- [ ] 2.4 `npx supabase test db` still passes
+- [x] 2.1 `npm test` passes, including all six route branches
+- [x] 2.2 `npm run lint` passes
+- [x] 2.3 `npm run build` passes
+- [x] 2.4 `npx supabase test db` still passes
 
 #### Manual
 
-- [ ] 2.5 Local `curl`: authenticated create visible in Studio; unauthenticated gives 401
+- [x] 2.5 Local `curl`: authenticated create visible in Studio; unauthenticated gives 401
 
 ### Phase 3: `/deck` page, form island and navigation
 
