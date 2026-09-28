@@ -37,8 +37,15 @@ export async function listFlashcards(
       .from("flashcards")
       .select("*", { count: "exact", head: true });
     if (countError) throw countError;
-    return { items: [], total: total ?? 0 };
+    return { items: [], total: requireCount(total) };
   }
   if (error) throw error;
-  return { items: data, total: count ?? 0 };
+  return { items: data, total: requireCount(count) };
+}
+
+// A null count without an error means the count option went missing; treating
+// it as 0 would show a full deck as empty.
+function requireCount(count: number | null): number {
+  if (count === null) throw new Error("flashcards count missing from the response");
+  return count;
 }

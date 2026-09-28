@@ -36,9 +36,11 @@ export const POST: APIRoute = async (context) => {
     const card = await createFlashcard(supabase, parsed.data);
     return Response.json(card, { status: 201 });
   } catch (error) {
-    // The database message stays in the Worker log; the client gets the fixed code.
+    // Only code and message reach the Worker log: a PostgrestError's details can
+    // quote the failing row, i.e. the user's card text. The client gets the fixed code.
+    const { code, message } = error as { code?: string; message?: string };
     // eslint-disable-next-line no-console
-    console.error("createFlashcard failed", error);
+    console.error("createFlashcard failed", { code, message });
     return apiError("server_error", "Could not save the flashcard");
   }
 };

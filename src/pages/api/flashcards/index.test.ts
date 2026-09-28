@@ -47,14 +47,15 @@ describe("POST /api/flashcards", () => {
 
   it("rejects a request without a session", async () => {
     stubClient({ data: card });
-    const response = await call(JSON.stringify({ front: "Q", back: "A" }), { user: null });
+    const response = await call("{not json", { user: null });
     expect(response.status).toBe(401);
     expect((await errorCode(response)).code).toBe("unauthorized");
+    expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("reports a missing Supabase configuration as a server error", async () => {
+  it("reports a missing Supabase configuration before reading the body", async () => {
     vi.mocked(createClient).mockReturnValue(null);
-    const response = await call(JSON.stringify({ front: "Q", back: "A" }));
+    const response = await call("{not json");
     expect(response.status).toBe(500);
     expect((await errorCode(response)).code).toBe("server_error");
   });

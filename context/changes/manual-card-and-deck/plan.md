@@ -291,14 +291,14 @@ None. No schema change. Merging to `main` deploys to production through Workers 
 
 #### Automated
 
-- [x] 2.1 `npm test` passes, including all six route branches
-- [x] 2.2 `npm run lint` passes
-- [x] 2.3 `npm run build` passes
-- [x] 2.4 `npx supabase test db` still passes
+- [x] 2.1 `npm test` passes, including all six route branches — 58985af
+- [x] 2.2 `npm run lint` passes — 58985af
+- [x] 2.3 `npm run build` passes — 58985af
+- [x] 2.4 `npx supabase test db` still passes — 58985af
 
 #### Manual
 
-- [x] 2.5 Local `curl`: authenticated create visible in Studio; unauthenticated gives 401
+- [x] 2.5 Local `curl`: authenticated create visible in Studio; unauthenticated gives 401 — 58985af
 
 ### Phase 3: `/deck` page, form island and navigation
 

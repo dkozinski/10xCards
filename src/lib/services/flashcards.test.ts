@@ -36,12 +36,20 @@ describe("listFlashcards", () => {
     expect(builder.order).toHaveBeenNthCalledWith(1, "created_at", { ascending: false });
     expect(builder.order).toHaveBeenNthCalledWith(2, "id", { ascending: false });
     expect(builder.range).toHaveBeenCalledWith(50, 99);
+    // without count: "exact" supabase-js returns count: null
+    expect(builder.select).toHaveBeenCalledWith("*", { count: "exact" });
   });
 
   it("falls back to a count-only query when the page is past the end", async () => {
-    const { client, calls } = stubClient([{ error: { code: "PGRST103" } }, { count: 51 }]);
+    const { client, builder, calls } = stubClient([{ error: { code: "PGRST103" } }, { count: 51 }]);
     await expect(listFlashcards(client, { from: 4950, to: 4999 })).resolves.toEqual({ items: [], total: 51 });
     expect(calls).toEqual(["page", "count"]);
+    expect(builder.select).toHaveBeenLastCalledWith("*", { count: "exact", head: true });
+  });
+
+  it("refuses to report a missing count as an empty deck", async () => {
+    const { client } = stubClient([{ data: [], count: null }]);
+    await expect(listFlashcards(client, { from: 0, to: 49 })).rejects.toThrow("count missing");
   });
 
   it("throws any other database error", async () => {
