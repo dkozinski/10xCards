@@ -13,7 +13,10 @@ This file provides guidance to AI Agent when working with code in this repositor
 - **API error codes are a closed vocabulary.** Input validation returns **400**
   (never 422) with code `validation_failed`; unparseable JSON → `invalid_json`;
   missing session → `unauthorized` (401); unexpected server/database failure →
-  `server_error` (500). The vocabulary and the response shape live in
+  `server_error` (500); the AI dependency failed or returned nothing usable
+  (upstream error, timeout, no valid cards) → `generation_failed` (502) — it tells
+  the client a retry may help, whereas `server_error` means our bug or
+  misconfiguration. The vocabulary and the response shape live in
   `src/lib/api-errors.ts` — return errors only through `apiError()`, never
   invent a new code inline.
 - **DTO fields use `snake_case`** (`user_id`, `created_at`) — the shape Postgres

@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-09-28
+updated: 2026-09-29
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -48,7 +48,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | ----- | -------------------------- | ---------------------------------------------------------------- | ------------- | --------------------------------------------------------------------- | -------- |
 | F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | done |
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
-| S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | ready    |
+| S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | in-progress |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | blocked  |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | ready    |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
@@ -116,7 +116,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Is there an upper character limit on pasted text, and what happens above it? (PRD Open Question 1) — Owner: user. Block: no.
 - **Risk:** This slice carries the milestone's real technical risk and has no prerequisites, so it can start on day one alongside the deck work — deliberately not deferred to the end, where discovering that a ~20-second request cannot be held open on this runtime would be unrecoverable. `tech-stack.md` already flags the shape of the problem. Nothing is written to the deck here, so the PRD's consent guardrail is untouched and the "no persistence of source text" requirement is easiest to honour while there is no store to leak into. The cost of stopping at proposals-on-screen is that the slice is not yet useful on its own; the gain is that generation quality becomes observable before any save path depends on it.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-03: Review proposals and save the keepers
 

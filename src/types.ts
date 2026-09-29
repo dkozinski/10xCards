@@ -9,3 +9,15 @@ export type FlashcardDto = Tables<"flashcards">;
 export type CreateFlashcardCommand = Pick<TablesInsert<"flashcards">, "front" | "back">;
 
 export type UpdateFlashcardCommand = Pick<TablesUpdate<"flashcards">, "front" | "back">;
+
+// An unsaved AI draft, not a DB row. Already valid under createFlashcardSchema,
+// so S-03 can save it as a CreateFlashcardCommand unchanged.
+export type FlashcardProposalDto = CreateFlashcardCommand;
+
+export interface GenerateProposalsCommand {
+  text: string;
+}
+
+export interface ProposalsResponseDto {
+  proposals: FlashcardProposalDto[];
+}
