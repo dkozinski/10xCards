@@ -450,6 +450,27 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
   - A non-JSON 200 body → `upstream_body_error`.
   - `finish_reason: "error"` → `upstream_body_error`, and `content: null` → `invalid_output` (added by impl-review F3).
 
+- **Phase 2 §1, branch 3: the body is read by a bounded `readBody()` helper, not `request.text()`** (impl-review-phase-2 F1).
+  - It rejects on a declared `Content-Length` over 128 KiB before reading anything.
+  - Otherwise it streams, counts bytes and cancels past the cap.
+  - Reason: `text()` would buffer up to the platform's 100 MB limit before any check, which exceeds the isolate's memory and CPU.
+  - A body stream that fails mid-upload → `invalid_json` ("Request body could not be read") instead of Astro's generic 500.
+- **Phase 2 §1: the unexpected-error log line is `{ name, latencyMs }`**, not `{ name }` only. Latency is inside the allowed-metadata list (impl-review-phase-2 F4).
+
+### Phase 2 measurements (local `npm run dev`, real OpenRouter calls, 2026-09-29)
+
+| Call | Text | Status | Time (browser) | Proposals |
+|---|---|---|---|---|
+| 1 | ~3,000 chars, Polish | 200 | **32.5 s** | 8 |
+| 2 | ~3,000 chars, English | 200 | 3.5 s | 9, English |
+| 3 | same Polish text, repeated | 200 | 4.5 s | 8, Polish, on-topic |
+
+- Server-side `latencyMs` from the `generateProposals ok` log lines was **3,382 / 2,911 / 4,001 ms** for calls 1–3. Usage was ~800 prompt / ~540 completion tokens, and cost ~$0.001 per call, with `dropped: 0` on all three.
+- So the first call's 32.5 s was **not** OpenRouter: ~29 s were spent outside `generateProposals`. That is consistent with the Vite dev server compiling the new route module and its imports on the first request, and it has no production equivalent. Phase 4 re-measures on the deployed Worker to confirm.
+- Quality: the Polish run had partial overlap (L1/L3 difference, then L1 and L3 separately). Acceptable for drafts; S-03's reject step is where it gets handled. No prompt change now.
+- The model is confirmed: `google/gemini-3.1-flash-lite` handles Polish and English.
+- Criterion 2.4 (< 30 s) is marked passed on the repeat call. The first-call outlier is recorded here instead of being hidden.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -458,29 +479,29 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm test`
-- [x] 1.2 Lint passes: `npm run lint`
-- [x] 1.3 Production build passes without `OPENROUTER_API_KEY` set: `npm run build`
+- [x] 1.1 Unit tests pass: `npm test` — b143b75
+- [x] 1.2 Lint passes: `npm run lint` — b143b75
+- [x] 1.3 Production build passes without `OPENROUTER_API_KEY` set: `npm run build` — b143b75
 
 #### Manual
 
-- [x] 1.4 `AGENTS.md` error-code rule lists `generation_failed` (502) with its meaning, and the diff was reviewed by the owner
+- [x] 1.4 `AGENTS.md` error-code rule lists `generation_failed` (502) with its meaning, and the diff was reviewed by the owner — b143b75
 
 ### Phase 2: `POST /api/proposals` endpoint
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm test`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Build passes: `npm run build`
+- [x] 2.1 Unit tests pass: `npm test`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.4 Local curl on ~3,000-char Polish text returns 1–20 Polish proposals in < 30 s (latency and count recorded)
-- [ ] 2.5 Local curl on ~3,000-char English text returns sensible English proposals (model confirmed or change recorded)
-- [ ] 2.6 Curl without cookie → 401; with 400 chars → 400 `validation_failed`
-- [ ] 2.7 Dev-server output contains no source text or model output
-- [ ] 2.8 OpenRouter account prepared before the first real call (credit limit, I/O logging off, use of inputs off, ZDR enforced)
+- [x] 2.4 Local curl on ~3,000-char Polish text returns 1–20 Polish proposals in < 30 s (latency and count recorded)
+- [x] 2.5 Local curl on ~3,000-char English text returns sensible English proposals (model confirmed or change recorded)
+- [x] 2.6 Curl without cookie → 401; with 400 chars → 400 `validation_failed`
+- [x] 2.7 Dev-server output contains no source text or model output
+- [x] 2.8 OpenRouter account prepared before the first real call (credit limit, I/O logging off, use of inputs off, ZDR enforced)
 
 ### Phase 3: `/generate` page and island
 
