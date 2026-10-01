@@ -478,6 +478,21 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 - **Phase 3 §2: the elapsed-seconds timer is a hook** (`src/components/hooks/useElapsedSeconds.ts`), per the AGENTS.md convention. It measures from a start timestamp, so a throttled background tab shows real time.
 - **Phase 3 §2–3: the page, island and Topbar link are in English, not Polish** (owner decision, impl-review-phase-3 F2, Fix B). The rest of the app is English, and the field errors come verbatim from the shared English schema, so the Polish strings the plan specified (stage messages, "Spróbuj ponownie", "Brak połączenia…", "Generuj z AI") produced a mixed-language page. Stages are now "Reading your text…" / "Picking out the key concepts…" / "Writing questions and answers…" / "Almost there…"; the counter reads "N / 20,000"; the link is "Generate with AI".
 
+### Phase 4
+
+- **Phase 4 §2: `cpuTime` (4.4) and the log inspection (4.5) are measured on production right after merge, not on the preview** (owner decision, 2026-10-01). Cloudflare records no logs for preview or version URLs: no `wrangler tail`, Workers Logs or Logpush ([docs](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/)). This was confirmed locally: production requests reached `wrangler tail`, preview requests did not, with or without `--version-id`. The preview still carries 4.3 (real generations, no 524/1102 visible in the browser) and 4.6 (OpenRouter activity). The Workers Paid rule is unchanged, but it fires after merge: median `cpuTime` > 6 ms or any 1102 → subscribe to Paid at once, or `wrangler rollback` (code only; the secret stays and is harmless, E17).
+
+### Phase 4 measurements (preview URL, real OpenRouter calls, 2026-10-01)
+
+| Call | Text | Time (browser) | Proposals | Errors |
+|---|---|---|---|---|
+| 1 | ~3,000 chars, Polish | 3.78 s | 10 | none |
+| 2 | ~3,000 chars, English | 3.38 s | 8 | none |
+| 3 | ~20,000 chars | 5.39 s | 14 | none |
+
+- All three are far under the 60 s budget, with no 524 or 1102. `cpuTime` cannot be read on a preview (see Phase 4 deviation); it is measured on production after merge.
+- OpenRouter Logs: provider **Google Vertex** on every call, no prompt or output preview available, account prompt/output logging off. Cost $0.0009–0.003 per call; model-side generation under 1 s at 190–245 tok/s, so the rest of the browser time is network plus the Worker.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -514,29 +529,29 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 
 #### Automated
 
-- [x] 3.1 Unit tests pass: `npm test`
-- [x] 3.2 Lint passes (incl. jsx-a11y): `npm run lint`
-- [x] 3.3 Build passes: `npm run build`
+- [x] 3.1 Unit tests pass: `npm test` — 65aac9e
+- [x] 3.2 Lint passes (incl. jsx-a11y): `npm run lint` — 65aac9e
+- [x] 3.3 Build passes: `npm run build` — 65aac9e
 
 #### Manual
 
-- [x] 3.4 Signed-out redirect; Topbar link opens `/generate` when signed in
-- [x] 3.5 499 / 20,001 chars show inline error with no network request
-- [x] 3.6 Immediate disable, ticking counter, changing stages, skeletons, then proposals with count
-- [x] 3.7 Simulated failure shows `generation_failed` + retry, text intact, retry works
-- [x] 3.8 No source text in `localStorage`/`sessionStorage`
+- [x] 3.4 Signed-out redirect; Topbar link opens `/generate` when signed in — 65aac9e
+- [x] 3.5 499 / 20,001 chars show inline error with no network request — 65aac9e
+- [x] 3.6 Immediate disable, ticking counter, changing stages, skeletons, then proposals with count — 65aac9e
+- [x] 3.7 Simulated failure shows `generation_failed` + retry, text intact, retry works — 65aac9e
+- [x] 3.8 No source text in `localStorage`/`sessionStorage` — 65aac9e
 
 ### Phase 4: Preview verification and release
 
 #### Automated
 
-- [ ] 4.1 CI green on the PR: `gh pr checks`
-- [ ] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY`
+- [x] 4.1 CI green on the PR: `gh pr checks`
+- [x] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY`
 
 #### Manual
 
-- [ ] 4.3 Preview: 3 real generations (PL, EN, ~20,000 chars) succeed under 60 s, no 524/1102
+- [x] 4.3 Preview: 3 real generations (PL, EN, ~20,000 chars) succeed under 60 s, no 524/1102
 - [ ] 4.4 cpuTime recorded and Workers Paid decision taken and written down
 - [ ] 4.5 Worker logs for those requests contain no source text, prompt or model output
-- [ ] 4.6 OpenRouter activity shows ZDR provider; account logging off
+- [x] 4.6 OpenRouter activity shows ZDR provider; account logging off
 - [ ] 4.7 Production smoke test after merge succeeds
