@@ -559,13 +559,13 @@ Version `cf7b6060`, `wrangler tail`. The tail lost its connection for a few seco
 
 #### Automated
 
-- [x] 4.1 CI green on the PR: `gh pr checks`
-- [x] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY`
+- [x] 4.1 CI green on the PR: `gh pr checks` — 27f17f5
+- [x] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY` — 27f17f5
 
 #### Manual
 
 - [x] 4.3 Preview: 3 real generations (PL, EN, ~20,000 chars) succeed under 60 s, no 524/1102
-- [x] 4.4 cpuTime recorded and Workers Paid decision taken and written down
-- [x] 4.5 Worker logs for those requests contain no source text, prompt or model output
+- [x] 4.4 cpuTime recorded and Workers Paid decision taken and written down — 27f17f5
+- [x] 4.5 Worker logs for those requests contain no source text, prompt or model output — 27f17f5
 - [x] 4.6 OpenRouter activity shows ZDR provider; account logging off
-- [x] 4.7 Production smoke test after merge succeeds
+- [x] 4.7 Production smoke test after merge succeeds — 27f17f5
