@@ -1001,8 +1001,11 @@ inferred from behaviour and from GitHub's check API)*:
       version by itself, no manual redeploy → re-run check 13 to prove the new key actually
       works. Skipping check 13 is how a rotation to a bad key ships silently: the banner stays
       hidden and the failure only appears inside `getUser()` (E7).
-- [ ] Record the open Paid gate: **cpuTime > 6 ms sustained, or the proposals PR** — judged
+- [x] Record the open Paid gate: **cpuTime > 6 ms sustained, or the proposals PR** — judged
       inside the 24 h Workers Logs window Free gives you (E28).
+      **Closed 2026-10-01:** the proposals PR (#22) shipped, production median `cpuTime` was
+      11 ms, and the owner subscribed to Workers Paid. Evidence:
+      `context/changes/ai-proposals-from-text/plan.md` (Phase 4 measurements).
 
 ---
 

@@ -493,6 +493,20 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 - All three are far under the 60 s budget, with no 524 or 1102. `cpuTime` cannot be read on a preview (see Phase 4 deviation); it is measured on production after merge.
 - OpenRouter Logs: provider **Google Vertex** on every call, no prompt or output preview available, account prompt/output logging off. Cost $0.0009–0.003 per call; model-side generation under 1 s at 190–245 tok/s, so the rest of the browser time is network plus the Worker.
 
+### Phase 4 measurements (production, after merge of PR #22, 2026-10-01)
+
+Version `cf7b6060`, `wrangler tail`. The tail lost its connection for a few seconds and missed the third generation; the owner chose not to repeat it, since it could not change the outcome.
+
+| Request | `cpuTime` | `wallTime` |
+|---|---|---|
+| `GET /generate` | 11 ms | 52 ms |
+| `POST /api/proposals` (10 cards) | 22 ms | 3,409 ms |
+| `POST /api/proposals` (~20,000 chars, 14 cards) | 9 ms | 5,140 ms |
+
+- **Workers Paid decision: subscribed** (owner, 2026-10-01). Median `cpuTime` of the measured page + API requests is **11 ms**, above the 6 ms rule; a third generation at 0 ms would still leave the median at 10 ms. No 1102, but several requests (also `/auth/signin` at 26 ms) exceeded Free's 10 ms and passed only on Free's tolerance. This closes the deployment-plan Paid gate.
+- **Logs (4.5):** the only `/api/proposals` log lines are `generateProposals ok {count, dropped, latencyMs, usage}`. No source text, prompt or model output.
+- **Smoke test (4.7):** both measured production generations returned 200 with proposals.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -545,13 +559,13 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 
 #### Automated
 
-- [x] 4.1 CI green on the PR: `gh pr checks`
-- [x] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY`
+- [x] 4.1 CI green on the PR: `gh pr checks` — 27f17f5
+- [x] 4.2 Secret present: `npx wrangler secret list --name 10xcards` shows `OPENROUTER_API_KEY` — 27f17f5
 
 #### Manual
 
-- [x] 4.3 Preview: 3 real generations (PL, EN, ~20,000 chars) succeed under 60 s, no 524/1102
-- [ ] 4.4 cpuTime recorded and Workers Paid decision taken and written down
-- [ ] 4.5 Worker logs for those requests contain no source text, prompt or model output
-- [x] 4.6 OpenRouter activity shows ZDR provider; account logging off
-- [ ] 4.7 Production smoke test after merge succeeds
+- [x] 4.3 Preview: 3 real generations (PL, EN, ~20,000 chars) succeed under 60 s, no 524/1102 — 27f17f5
+- [x] 4.4 cpuTime recorded and Workers Paid decision taken and written down — 27f17f5
+- [x] 4.5 Worker logs for those requests contain no source text, prompt or model output — 27f17f5
+- [x] 4.6 OpenRouter activity shows ZDR provider; account logging off — 27f17f5
+- [x] 4.7 Production smoke test after merge succeeds — 27f17f5
