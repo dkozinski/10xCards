@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GenerationError, generateProposals } from "./generation";
 
 const SOURCE = `Fotosynteza zachodzi w chloroplastach. ${"Tekst źródłowy. ".repeat(40)}`;
@@ -65,8 +65,20 @@ function hangingFetch() {
   );
 }
 
+// The service must not log at all: logs persist, and only the route decides which
+// metadata is safe to write. So every test in this file is also a no-logging test.
+const CONSOLE_METHODS = ["log", "info", "warn", "error", "debug"] as const;
+let consoleSpies: MockInstance[] = [];
+
+beforeEach(() => {
+  consoleSpies = CONSOLE_METHODS.map((method) => vi.spyOn(console, method).mockImplementation(() => undefined));
+});
+
 afterEach(() => {
   vi.useRealTimers();
+  const used = consoleSpies.filter((spy) => spy.mock.calls.length > 0).map((spy) => spy.getMockName());
+  for (const spy of consoleSpies) spy.mockRestore();
+  expect(used).toEqual([]);
 });
 
 describe("generateProposals — outgoing request", () => {
@@ -115,6 +127,7 @@ describe("generateProposals — results", () => {
   it.each([
     ["null usage", { usage: null }],
     ["null error field", { error: null }],
+    ["malformed usage", { usage: { prompt_tokens: 100, cost: "0.1" } }],
   ])("still succeeds with a %s", async (_name, extra) => {
     const fetchImpl = stubFetch(completion({ cards: [{ front: "Q", back: "A" }] }, extra));
     const result = await generateProposals(KEY, { text: SOURCE }, { fetchImpl });
@@ -175,6 +188,27 @@ describe("generateProposals — failures", () => {
     expect((await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }))).kind).toBe("invalid_output");
   });
 
+  it("carries finish_reason and completion_tokens on a truncated reply", async () => {
+    const fetchImpl = stubFetch(
+      Response.json({
+        choices: [{ message: { content: '{"cards":[{"front":"Q","ba' }, finish_reason: "length" }],
+        usage: { prompt_tokens: 5450, completion_tokens: 3500, cost: 0.003 },
+      }),
+    );
+    const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
+    expect(error.kind).toBe("invalid_output");
+    expect(error.diagnostics).toEqual({ finishReason: "length", completionTokens: 3500 });
+  });
+
+  it("drops a finish_reason that is not a short identifier", async () => {
+    const fetchImpl = stubFetch(
+      Response.json({ choices: [{ message: { content: "not json" }, finish_reason: `stopped at ${SOURCE}` }] }),
+    );
+    const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
+    expect(error.diagnostics.finishReason).toBeUndefined();
+    expect(JSON.stringify(error.diagnostics)).not.toContain(SOURCE);
+  });
+
   it("maps null content (empty reply or refusal) to invalid_output", async () => {
     const fetchImpl = stubFetch(Response.json({ choices: [{ message: { content: null } }] }));
     expect((await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }))).kind).toBe("invalid_output");
@@ -202,6 +236,13 @@ describe("generateProposals — failures", () => {
     const fetchImpl = stubFetch(Response.json({ error: { code: status, message: "x" } }, { status }));
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
     expect(error.kind).toBe("upstream_http");
+    expect(error.status).toBe(status);
+  });
+
+  it.each([400, 401, 403, 404])("maps HTTP %i to upstream_config with the status", async (status) => {
+    const fetchImpl = stubFetch(Response.json({ error: { code: status, message: "x" } }, { status }));
+    const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
+    expect(error.kind).toBe("upstream_config");
     expect(error.status).toBe(status);
   });
 

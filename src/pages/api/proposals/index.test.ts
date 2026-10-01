@@ -106,6 +106,20 @@ describe("POST /api/proposals", () => {
     expect(generateProposals).not.toHaveBeenCalled();
   });
 
+  // A body of exactly the limit passes the size check and reaches the schema, which
+  // rejects the 131,000-character text for its own reason; one byte more is "too large".
+  it.each([
+    [128 * 1024, "Text must be at most 20000 characters"],
+    [128 * 1024 + 1, "Request body is too large"],
+  ])("treats a %i-byte body by the size limit's boundary", async (bytes, message) => {
+    const envelope = '{"text":""}';
+    const body = `{"text":"${"a".repeat(bytes - envelope.length)}"}`;
+    expect(new TextEncoder().encode(body).length).toBe(bytes);
+    const response = await callStreamed(new Blob([body]).stream());
+    expect(response.status).toBe(400);
+    expect((await errorOf(response)).details?.fieldErrors.text).toEqual([message]);
+  });
+
   it("rejects on a declared Content-Length before reading the body", async () => {
     // This body never ends: if the route read it at all, the test would hang and time out.
     const request = new Request("http://localhost/api/proposals", {
@@ -175,6 +189,28 @@ describe("POST /api/proposals", () => {
     expect(response.status).toBe(502);
     expect((await errorOf(response)).code).toBe("generation_failed");
     expect(logError).toHaveBeenCalledWith("generateProposals failed", expect.objectContaining({ kind, status }));
+  });
+
+  it("logs the content-free diagnostics of a failed completion", async () => {
+    vi.mocked(generateProposals).mockRejectedValue(
+      new GenerationError("invalid_output", undefined, { finishReason: "length", completionTokens: 3500 }),
+    );
+    await call(JSON.stringify({ text: TEXT }));
+    expect(logError).toHaveBeenCalledWith(
+      "generateProposals failed",
+      expect.objectContaining({ kind: "invalid_output", finishReason: "length", completionTokens: 3500 }),
+    );
+  });
+
+  it("maps upstream_config to 500 server_error, not a retryable 502", async () => {
+    vi.mocked(generateProposals).mockRejectedValue(new GenerationError("upstream_config", 401));
+    const response = await call(JSON.stringify({ text: TEXT }));
+    expect(response.status).toBe(500);
+    expect((await errorOf(response)).code).toBe("server_error");
+    expect(logError).toHaveBeenCalledWith(
+      "generateProposals failed",
+      expect.objectContaining({ kind: "upstream_config", status: 401 }),
+    );
   });
 
   it("maps an unexpected error to 500 server_error", async () => {

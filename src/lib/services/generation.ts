@@ -29,6 +29,7 @@ delete responseSchema.$schema;
 export type GenerationErrorKind =
   | "timeout"
   | "upstream_http"
+  | "upstream_config"
   | "upstream_body_error"
   | "invalid_output"
   | "no_valid_cards";
@@ -38,15 +39,29 @@ export type GenerationErrorKind =
 const MESSAGES: Record<GenerationErrorKind, string> = {
   timeout: "Generation timed out",
   upstream_http: "Generation service returned an error status",
+  upstream_config: "Generation service rejected the request or credentials",
   upstream_body_error: "Generation service reported an error",
   invalid_output: "Generation returned unreadable output",
   no_valid_cards: "Generation returned no valid flashcards",
 };
 
+// Statuses that retrying cannot fix: a schema or parameter OpenRouter rejects, a
+// retired model ID, a revoked key. That is our misconfiguration, not a passing
+// failure. 402 (credit exhausted), 408, 429 and 5xx stay retryable upstream_http.
+const CONFIG_STATUSES = new Set([400, 401, 403, 404]);
+
+// Content-free signals for the failure log: they tell a truncation ("length")
+// from a refusal or malformed JSON when deciding on max_tokens.
+export interface GenerationDiagnostics {
+  finishReason?: string;
+  completionTokens?: number;
+}
+
 export class GenerationError extends Error {
   constructor(
     readonly kind: GenerationErrorKind,
     readonly status?: number,
+    readonly diagnostics: GenerationDiagnostics = {},
   ) {
     super(MESSAGES[kind]);
     this.name = "GenerationError";
@@ -143,7 +158,10 @@ export async function generateProposals(
     if (!response.ok) {
       // cancel() rejects if the abort already errored the stream; the status is what matters.
       await response.body?.cancel().catch(() => undefined);
-      throw new GenerationError("upstream_http", response.status);
+      throw new GenerationError(
+        CONFIG_STATUSES.has(response.status) ? "upstream_config" : "upstream_http",
+        response.status,
+      );
     }
 
     try {
@@ -163,18 +181,26 @@ export async function generateProposals(
     throw new GenerationError("upstream_body_error");
   }
 
+  const usage = usageSchema.safeParse(completion.data.usage).data;
+  // finish_reason is upstream-controlled text, so only a short identifier is kept.
+  const reason = choice.finish_reason;
+  const diagnostics: GenerationDiagnostics = {
+    finishReason: reason != null && /^[a-z_]{1,32}$/.test(reason) ? reason : undefined,
+    completionTokens: usage?.completion_tokens,
+  };
+
   // An empty reply (refusal) and truncation (finish_reason "length", whose cut-off
   // JSON does not parse) are both unusable output rather than upstream failures.
   const content = choice.message.content;
-  if (content == null) throw new GenerationError("invalid_output");
+  if (content == null) throw new GenerationError("invalid_output", undefined, diagnostics);
   let output: unknown;
   try {
     output = JSON.parse(content);
   } catch {
-    throw new GenerationError("invalid_output");
+    throw new GenerationError("invalid_output", undefined, diagnostics);
   }
   const raw = rawOutputSchema.safeParse(output);
-  if (!raw.success) throw new GenerationError("invalid_output");
+  if (!raw.success) throw new GenerationError("invalid_output", undefined, diagnostics);
 
   const valid: FlashcardProposalDto[] = [];
   for (const card of raw.data.cards) {
@@ -182,14 +208,14 @@ export async function generateProposals(
     if (parsed.success) valid.push(parsed.data);
   }
   const proposals = valid.slice(0, MAX_PROPOSALS);
-  if (proposals.length === 0) throw new GenerationError("no_valid_cards");
+  if (proposals.length === 0) throw new GenerationError("no_valid_cards", undefined, diagnostics);
 
   return {
     proposals,
     meta: {
       dropped: raw.data.cards.length - proposals.length,
       latencyMs: Date.now() - started,
-      usage: usageSchema.safeParse(completion.data.usage).data,
+      usage,
     },
   };
 }

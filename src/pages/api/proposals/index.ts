@@ -95,10 +95,19 @@ export const POST: APIRoute = async (context) => {
   } catch (error) {
     const latencyMs = Date.now() - started;
     if (error instanceof GenerationError) {
-      // kind and status only; status is absent on network failures and timeouts
+      // kind, status and content-free diagnostics only; status is absent on network
+      // failures and timeouts, diagnostics on failures before a completion arrived
       // eslint-disable-next-line no-console
-      console.error("generateProposals failed", { kind: error.kind, status: error.status, latencyMs });
-      return apiError("generation_failed", "Could not generate flashcards. Please try again.");
+      console.error("generateProposals failed", {
+        kind: error.kind,
+        status: error.status,
+        ...error.diagnostics,
+        latencyMs,
+      });
+      // a rejected key, model or schema is our misconfiguration: retrying cannot help
+      return error.kind === "upstream_config"
+        ? apiError("server_error", "AI generation is misconfigured")
+        : apiError("generation_failed", "Could not generate flashcards. Please try again.");
     }
     // eslint-disable-next-line no-console
     console.error("generateProposals crashed", { name: error instanceof Error ? error.name : typeof error, latencyMs });
