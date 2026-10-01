@@ -1,0 +1,23 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+import GenerateProposals from "@/components/generate/GenerateProposals";
+---
+
+<Layout title="Generate with AI">
+  <div class="bg-cosmic min-h-screen p-4">
+    <div class="mx-auto w-full max-w-2xl text-white">
+      <Topbar />
+
+      <section class="rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl">
+        <h1 class="mb-1 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+          Generate flashcards from text
+        </h1>
+        <p class="mb-4 text-sm text-blue-100/60">
+          Paste a text and AI will propose up to 20 flashcards. Your text is never stored.
+        </p>
+        <GenerateProposals client:load />
+      </section>
+    </div>
+  </div>
+</Layout>

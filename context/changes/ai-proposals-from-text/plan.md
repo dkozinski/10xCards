@@ -471,6 +471,13 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 - The model is confirmed: `google/gemini-3.1-flash-lite` handles Polish and English.
 - Criterion 2.4 (< 30 s) is marked passed on the repeat call. The first-call outlier is recorded here instead of being hidden.
 
+### Phase 3
+
+- **Phase 3 §1: the shadcn files are not committed exactly as produced.** The current shadcn CLI generated `import { cn } from "cn"` and installed the new `cn` npm package (shadcn's own clsx + tailwind-merge replacement), ignoring the `utils: "@/lib/utils"` alias in `components.json`. The package was uninstalled and both files import `cn` from `@/lib/utils`, so there is still no new dependency (research L4) and one `cn` in the repo. The files were also run through Prettier to match the repo style. Re-check the imports after any future `npx shadcn add`.
+- **Phase 3 §2: the `aria-live` region is a separate, always-mounted `sr-only` paragraph, not the progress block** (impl-review-phase-3 F4). It carries the stage message while pending and "Generated N proposals" on success; the visible progress line, with its per-second counter, is `aria-hidden`. Screen readers skip a live region inserted together with its text, and a counter changing every second would be announced continuously.
+- **Phase 3 §2: the elapsed-seconds timer is a hook** (`src/components/hooks/useElapsedSeconds.ts`), per the AGENTS.md convention. It measures from a start timestamp, so a throttled background tab shows real time.
+- **Phase 3 §2–3: the page, island and Topbar link are in English, not Polish** (owner decision, impl-review-phase-3 F2, Fix B). The rest of the app is English, and the field errors come verbatim from the shared English schema, so the Polish strings the plan specified (stage messages, "Spróbuj ponownie", "Brak połączenia…", "Generuj z AI") produced a mixed-language page. Stages are now "Reading your text…" / "Picking out the key concepts…" / "Writing questions and answers…" / "Almost there…"; the counter reads "N / 20,000"; the link is "Generate with AI".
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -491,33 +498,33 @@ Recorded from `reviews/impl-review-phase-1.md` (F4); phase blocks above are left
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm test`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Build passes: `npm run build`
+- [x] 2.1 Unit tests pass: `npm test` — 5eb5023
+- [x] 2.2 Lint passes: `npm run lint` — 5eb5023
+- [x] 2.3 Build passes: `npm run build` — 5eb5023
 
 #### Manual
 
-- [x] 2.4 Local curl on ~3,000-char Polish text returns 1–20 Polish proposals in < 30 s (latency and count recorded)
-- [x] 2.5 Local curl on ~3,000-char English text returns sensible English proposals (model confirmed or change recorded)
-- [x] 2.6 Curl without cookie → 401; with 400 chars → 400 `validation_failed`
-- [x] 2.7 Dev-server output contains no source text or model output
-- [x] 2.8 OpenRouter account prepared before the first real call (credit limit, I/O logging off, use of inputs off, ZDR enforced)
+- [x] 2.4 Local curl on ~3,000-char Polish text returns 1–20 Polish proposals in < 30 s (latency and count recorded) — 5eb5023
+- [x] 2.5 Local curl on ~3,000-char English text returns sensible English proposals (model confirmed or change recorded) — 5eb5023
+- [x] 2.6 Curl without cookie → 401; with 400 chars → 400 `validation_failed` — 5eb5023
+- [x] 2.7 Dev-server output contains no source text or model output — 5eb5023
+- [x] 2.8 OpenRouter account prepared before the first real call (credit limit, I/O logging off, use of inputs off, ZDR enforced) — 5eb5023
 
 ### Phase 3: `/generate` page and island
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass: `npm test`
-- [ ] 3.2 Lint passes (incl. jsx-a11y): `npm run lint`
-- [ ] 3.3 Build passes: `npm run build`
+- [x] 3.1 Unit tests pass: `npm test`
+- [x] 3.2 Lint passes (incl. jsx-a11y): `npm run lint`
+- [x] 3.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 3.4 Signed-out redirect; Topbar link opens `/generate` when signed in
-- [ ] 3.5 499 / 20,001 chars show inline error with no network request
-- [ ] 3.6 Immediate disable, ticking counter, changing stages, skeletons, then proposals with count
-- [ ] 3.7 Simulated failure shows `generation_failed` + retry, text intact, retry works
-- [ ] 3.8 No source text in `localStorage`/`sessionStorage`
+- [x] 3.4 Signed-out redirect; Topbar link opens `/generate` when signed in
+- [x] 3.5 499 / 20,001 chars show inline error with no network request
+- [x] 3.6 Immediate disable, ticking counter, changing stages, skeletons, then proposals with count
+- [x] 3.7 Simulated failure shows `generation_failed` + retry, text intact, retry works
+- [x] 3.8 No source text in `localStorage`/`sessionStorage`
 
 ### Phase 4: Preview verification and release
 
