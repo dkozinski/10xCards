@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-01
+updated: 2026-10-05
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -49,7 +49,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | done |
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
-| S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | blocked  |
+| S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | planning |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | ready    |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
@@ -126,11 +126,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Prerequisites:** S-01, S-02
 - **Parallel with:** S-04, S-05
 - **Blockers:** —
-- **Unknowns:**
-  - Is the fact that a proposal was rejected recorded anywhere, in aggregate, so the PRD's "75% accepted without modification" criterion can actually be computed — given that rejected proposals never reach the deck? (PRD Open Question 2) — Owner: user. Block: yes.
-  - Does a proposal that was edited and then saved still count toward "75% of the deck created with AI", and where is the line between AI-assisted and manual? (PRD Open Question 3) — Owner: user. Block: yes.
-- **Risk:** Blocked on purpose. Both unknowns decide whether this slice writes one thing (the kept cards) or two (the kept cards plus a record of what was discarded), and that is a different shape of work, not a detail to settle mid-implementation. Answering them costs the owner minutes; discovering them after the slice is built costs a rewrite of its write path. The PRD's own success criteria cannot be evaluated at all if the answer is "nothing is recorded", so this is a product decision, not a technical one. Sequenced after S-01 and S-02 because it is the join point of both — it needs somewhere to save and something to save.
-- **Status:** blocked
+- **Unknowns:** — (PRD Open Questions 2 and 3 resolved 2026-10-05: per-generation counts in a `generations` table; `flashcards.source` = `manual` | `ai` | `ai_edited`.)
+- **Risk:** Was blocked on purpose until the owner answered. Both questions decided whether this slice writes one thing (the kept cards) or two (the kept cards plus a record of what was discarded), and that is a different shape of work, not a detail to settle mid-implementation. Answering them costs the owner minutes; discovering them after the slice is built costs a rewrite of its write path. The PRD's own success criteria cannot be evaluated at all if the answer is "nothing is recorded", so this is a product decision, not a technical one. Sequenced after S-01 and S-02 because it is the join point of both — it needs somewhere to save and something to save. The answer is "two things", so the save must write the cards and the generation record atomically.
+- **Status:** planning
 
 ### S-04: Edit and delete saved cards
 
@@ -179,7 +177,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | F-01       | #7    | `deck-data-contract`       | Establish the owner-scoped flashcard store and its types      | yes                   | Highest fan-out: unlocks five items |
 | S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | yes                   | Done 2026-09-28 (PR #20) |
 | S-02       | #8    | `ai-proposals-from-text`   | Draft flashcard proposals from pasted text                    | yes                   | No prerequisites; can run in parallel with F-01 |
-| S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | no                    | Blocked on PRD Open Questions 2 and 3 |
+| S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | yes                   | Q-2/Q-3 resolved 2026-10-05 (#2, #3 closed) |
 | S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | yes                   | S-01 done 2026-09-28 |
 | S-05       | #12   | `srs-review-session`       | Run a scheduled review session over the deck                  | yes                   | S-01 done 2026-09-28; picks the scheduling algorithm |
 | S-06       | #13   | `account-and-data-deletion`| Delete the account and all of its data                        | no                    | Waits on S-01 and S-05 |
@@ -191,8 +189,8 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 ## Open Roadmap Questions
 
 1. **Is there an upper character limit on pasted text submitted for generation, and what happens above it?** — Owner: user (PRD Open Question 1). Block: S-02, non-blocking — a default can be chosen at plan time.
-2. **Is the fact of a rejection recorded in aggregate, so the "75% accepted without modification" criterion can be computed at all?** — Owner: user (PRD Open Question 2). Block: S-03, blocking.
-3. **Does an edited-then-saved proposal still count toward "75% of the deck created with AI", and where is the threshold between AI-assisted and manual?** — Owner: user (PRD Open Question 3). Block: S-03, blocking.
+2. **Is the fact of a rejection recorded in aggregate, so the "75% accepted without modification" criterion can be computed at all?** — Owner: user (PRD Open Question 2). Block: S-03, blocking. **Resolved 2026-10-05 (#2):** yes, per-generation counts in a `generations` table.
+3. **Does an edited-then-saved proposal still count toward "75% of the deck created with AI", and where is the threshold between AI-assisted and manual?** — Owner: user (PRD Open Question 3). Block: S-03, blocking. **Resolved 2026-10-05 (#3):** yes, as `ai_edited`; any edit before save crosses the line.
 4. **When a saved flashcard is edited, is its grade history preserved or reset?** — Owner: downstream, tied to the algorithm chosen in S-05 (PRD Open Question 4). Block: S-04 and S-05, non-blocking.
 5. **How is the irreversible account deletion confirmed to the user?** — Owner: downstream (PRD Open Question 5). Block: S-06, non-blocking.
 6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap.
