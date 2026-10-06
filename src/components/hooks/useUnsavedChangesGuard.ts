@@ -11,6 +11,9 @@ export function useUnsavedChangesGuard(active: boolean): { disarm: () => void } 
     if (!active) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
+      // legacy trigger for Chromium < 119 and some WebViews, which ignore preventDefault()
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     const remove = () => {

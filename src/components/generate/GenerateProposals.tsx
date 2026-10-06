@@ -174,9 +174,12 @@ export default function GenerateProposals() {
 
         <Button
           type="submit"
-          disabled={pending || review !== null}
+          disabled={pending}
+          // aria-disabled, not disabled: the button stays focusable so the hint is
+          // read out; generate() ignores the click while a review is pending
+          aria-disabled={review ? true : undefined}
           aria-describedby={review ? "generate-locked-hint" : undefined}
-          className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+          className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-purple-600"
         >
           {pending ? (
             <span className="flex items-center gap-2">

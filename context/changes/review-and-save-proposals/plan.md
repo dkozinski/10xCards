@@ -585,19 +585,19 @@ This touches production (Supabase cloud). It is irreversible except by a new for
 
 #### Automated
 
-- [x] 3.1 Tests, lint and build pass
-- [x] 3.2 NewFlashcardForm still renders ids front/back
+- [x] 3.1 Tests, lint and build pass — 93cf49e
+- [x] 3.2 NewFlashcardForm still renders ids front/back — 93cf49e
 
 #### Manual
 
-- [x] 3.3 Reject/edit/save lands on /deck with correct sources and counts
-- [x] 3.4 Revert and whitespace-only edits save as ai
-- [x] 3.5 Discard all records 0/0/N, clears list, keeps text
-- [x] 3.6 Generate is locked while a review is pending
-- [x] 3.7 Invalid kept card blocks save; rejected invalid card does not
-- [x] 3.8 Unload guard prompts while pending, not after save
-- [x] 3.9 Lost-response retry writes a single set of rows
-- [x] 3.10 NewFlashcardForm still works
+- [x] 3.3 Reject/edit/save lands on /deck with correct sources and counts — 93cf49e
+- [x] 3.4 Revert and whitespace-only edits save as ai — 93cf49e
+- [x] 3.5 Discard all records 0/0/N, clears list, keeps text — 93cf49e
+- [x] 3.6 Generate is locked while a review is pending — 93cf49e
+- [x] 3.7 Invalid kept card blocks save; rejected invalid card does not — 93cf49e
+- [x] 3.8 Unload guard prompts while pending, not after save — 93cf49e
+- [x] 3.9 Lost-response retry writes a single set of rows — 93cf49e
+- [x] 3.10 NewFlashcardForm still works — 93cf49e
 
 ### Phase 4: Release
 

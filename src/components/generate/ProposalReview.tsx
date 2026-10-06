@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Pencil, RotateCcw, Save, Trash2, Undo2, X } from "lucide-react";
 import { z } from "zod";
 import { ServerError } from "@/components/auth/ServerError";
-import { CardField } from "@/components/deck/CardField";
+import { CardField, type FieldErrors, firstErrors } from "@/components/deck/CardField";
 import { useUnsavedChangesGuard } from "@/components/hooks/useUnsavedChangesGuard";
 import { Button } from "@/components/ui/button";
 import type { ApiErrorBody } from "@/lib/api-errors";
@@ -16,10 +16,12 @@ const SAVE_TIMEOUT_MS = 30_000;
 
 const SAVE_FAILED = "Could not save. Please try again.";
 
-const ITEM_BUTTON = "rounded-lg border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/20";
+// The failing editors may be off-screen in a list of 20, so the alert names how many.
+function needsFixing(count: number): string {
+  return count === 1 ? "1 card needs fixing before saving." : `${count} cards need fixing before saving.`;
+}
 
-type Field = "front" | "back";
-type FieldErrors = Partial<Record<Field, string>>;
+const ITEM_BUTTON = "rounded-lg border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/20";
 
 interface ReviewItem {
   id: string;
@@ -36,10 +38,6 @@ interface ReviewItem {
 interface SentCommand {
   command: SaveGenerationCommand;
   itemIds: string[];
-}
-
-function firstErrors(fieldErrors: Partial<Record<string, string[]>>): FieldErrors {
-  return { front: fieldErrors.front?.[0], back: fieldErrors.back?.[0] };
 }
 
 function cardErrors(fieldErrors: Partial<Record<string, string[]>>, itemIds: string[]): Map<string, FieldErrors> {
@@ -120,6 +118,7 @@ export default function ProposalReview({ generationId, proposals, onDiscarded }:
     }
     if (invalid.size > 0) {
       setItems((prev) => prev.map((i) => ({ ...i, ...openWith(invalid.get(i.id)) })));
+      setError(needsFixing(invalid.size));
       return null;
     }
     return {
@@ -173,11 +172,19 @@ export default function ProposalReview({ generationId, proposals, onDiscarded }:
     }
 
     if (code === "validation_failed" && body?.error?.details) {
+      // the route validates before the RPC, so nothing was written: even a
+      // frozen list can be unlocked for the user to fix the cards
+      setFrozen(null);
       const byItem = cardErrors(body.error.details.fieldErrors, sent.itemIds);
-      if (byItem.size > 0) setItems((prev) => prev.map((i) => ({ ...i, ...openWith(byItem.get(i.id)) })));
-      else setError(SAVE_FAILED);
+      if (byItem.size > 0) {
+        setItems((prev) => prev.map((i) => ({ ...i, ...openWith(byItem.get(i.id)) })));
+        setError(needsFixing(byItem.size));
+      } else {
+        setError(SAVE_FAILED);
+      }
     } else if (code === "unauthorized") {
-      setError("Your session has expired. Sign in again to save these cards.");
+      // signing in from this tab would leave the page and lose the review
+      setError("Your session has expired. Sign in again in another tab, then save again.");
     } else {
       // 5xx or a 200 of another shape: the server may have committed
       setFrozen(sent);

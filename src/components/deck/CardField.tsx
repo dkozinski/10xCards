@@ -1,6 +1,13 @@
 import { CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export type FieldErrors = Partial<Record<"front" | "back", string>>;
+
+// The first message per field from zod's (or the API's) fieldErrors record.
+export function firstErrors(fieldErrors: Partial<Record<string, string[]>>): FieldErrors {
+  return { front: fieldErrors.front?.[0], back: fieldErrors.back?.[0] };
+}
+
 interface CardFieldProps {
   // free-form so several editors can share a page ("p-<itemId>-front")
   id: string;

@@ -2,17 +2,10 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 import { ServerError } from "@/components/auth/ServerError";
-import { CardField } from "@/components/deck/CardField";
+import { CardField, type FieldErrors, firstErrors } from "@/components/deck/CardField";
 import { Button } from "@/components/ui/button";
 import type { ApiErrorBody } from "@/lib/api-errors";
 import { BACK_MAX, FRONT_MAX, createFlashcardSchema } from "@/lib/validation/flashcard";
-
-type Field = "front" | "back";
-type FieldErrors = Partial<Record<Field, string>>;
-
-function firstErrors(fieldErrors: Partial<Record<string, string[]>>): FieldErrors {
-  return { front: fieldErrors.front?.[0], back: fieldErrors.back?.[0] };
-}
 
 export default function NewFlashcardForm() {
   const [front, setFront] = useState("");
