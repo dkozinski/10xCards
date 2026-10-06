@@ -6,10 +6,18 @@ import { useElapsedSeconds } from "@/components/hooks/useElapsedSeconds";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import ProposalReview from "@/components/generate/ProposalReview";
 import type { ApiErrorBody } from "@/lib/api-errors";
 import { cn } from "@/lib/utils";
 import { SOURCE_TEXT_MAX, SOURCE_TEXT_MIN, generateProposalsSchema } from "@/lib/validation/generation";
 import type { FlashcardProposalDto, ProposalsResponseDto } from "@/types";
+
+// One generation awaiting the user's decision. The id is minted once, when the
+// proposals arrive, and reused by every save retry: it is the idempotency key.
+interface PendingReview {
+  generationId: string;
+  proposals: FlashcardProposalDto[];
+}
 
 // Time-based, not driven by the server: the request is one synchronous POST with no
 // progress events, so these only reassure the user that the wait is expected.
@@ -51,12 +59,14 @@ export default function GenerateProposals() {
   const [text, setText] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<RequestError | null>(null);
-  const [proposals, setProposals] = useState<FlashcardProposalDto[] | null>(null);
+  const [review, setReview] = useState<PendingReview | null>(null);
+  const [discarded, setDiscarded] = useState(false);
   const [pending, setPending] = useState(false);
   const elapsed = useElapsedSeconds(pending);
 
   async function generate() {
-    if (pending) return;
+    // a new list would silently replace one the user has not decided on yet
+    if (pending || review) return;
     setRequestError(null);
 
     const parsed = generateProposalsSchema.safeParse({ text });
@@ -65,7 +75,7 @@ export default function GenerateProposals() {
       return;
     }
     setFieldError(null);
-    setProposals(null);
+    setDiscarded(false);
     setPending(true);
 
     let response: Response;
@@ -89,8 +99,8 @@ export default function GenerateProposals() {
     // Partial: a proxy or platform page may answer with a body of another shape, or none at all
     const body = (await response.json().catch(() => null)) as Partial<ProposalsResponseDto & ApiErrorBody> | null;
     const code = body?.error?.code;
-    if (response.ok && Array.isArray(body?.proposals)) {
-      setProposals(body.proposals);
+    if (response.ok && Array.isArray(body?.proposals) && body.proposals.length > 0) {
+      setReview({ generationId: crypto.randomUUID(), proposals: body.proposals });
     } else if (code === "validation_failed" && body?.error?.details) {
       setFieldError(body.error.details.fieldErrors.text?.[0] ?? "Invalid text.");
     } else if (code === "generation_failed") {
@@ -164,7 +174,8 @@ export default function GenerateProposals() {
 
         <Button
           type="submit"
-          disabled={pending}
+          disabled={pending || review !== null}
+          aria-describedby={review ? "generate-locked-hint" : undefined}
           className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
         >
           {pending ? (
@@ -179,6 +190,11 @@ export default function GenerateProposals() {
             </span>
           )}
         </Button>
+        {review && (
+          <p id="generate-locked-hint" className="text-xs text-white/40">
+            Save or discard these proposals first.
+          </p>
+        )}
       </form>
 
       {requestError && (
@@ -201,7 +217,13 @@ export default function GenerateProposals() {
           exists, not one inserted together with its text. Errors announce via ServerError's
           role="alert"; the per-second counter is left out, it would flood the reader. */}
       <p className="sr-only" aria-live="polite">
-        {pending ? stageFor(elapsed) : proposals ? `Generated ${proposals.length} proposals` : ""}
+        {pending
+          ? stageFor(elapsed)
+          : review
+            ? `Generated ${review.proposals.length} proposals`
+            : discarded
+              ? "Proposals discarded"
+              : ""}
       </p>
 
       {pending && (
@@ -222,24 +244,17 @@ export default function GenerateProposals() {
         </div>
       )}
 
-      {proposals && (
-        <div>
-          <h2 className="mb-1 text-xl font-semibold">Proposals ({proposals.length})</h2>
-          <p className="mb-4 text-sm text-blue-100/60">
-            Preview only — saving proposals to your deck comes in the next step.
-          </p>
-          <ul className="space-y-3">
-            {proposals.map((card, i) => (
-              // proposals have no id and the list is never reordered, so the index is a stable key
-              <li key={i} className="rounded-lg border border-white/10 bg-white/5 p-4">
-                <p className="font-medium break-words whitespace-pre-wrap">{card.front}</p>
-                <p className="mt-2 border-t border-white/10 pt-2 text-sm break-words whitespace-pre-wrap text-blue-100/80">
-                  {card.back}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {review && (
+        <ProposalReview
+          key={review.generationId}
+          generationId={review.generationId}
+          proposals={review.proposals}
+          onDiscarded={() => {
+            // the source text stays, so the user can generate again from it
+            setReview(null);
+            setDiscarded(true);
+          }}
+        />
       )}
     </div>
   );

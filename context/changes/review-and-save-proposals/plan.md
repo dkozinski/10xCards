@@ -572,32 +572,32 @@ This touches production (Supabase cloud). It is irreversible except by a new for
 
 #### Automated
 
-- [x] 2.1 Unit tests pass including new suites
-- [x] 2.2 Lint passes
-- [x] 2.3 Build passes
-- [x] 2.4 New tests are non-vacuous (mutation-checked)
+- [x] 2.1 Unit tests pass including new suites — bc2247c
+- [x] 2.2 Lint passes — bc2247c
+- [x] 2.3 Build passes — bc2247c
+- [x] 2.4 New tests are non-vacuous (mutation-checked) — bc2247c
 
 #### Manual
 
-- [x] 2.5 curl against local stack: save, replay, invalid card, no cookie
+- [x] 2.5 curl against local stack: save, replay, invalid card, no cookie — bc2247c
 
 ### Phase 3: UI — review list and save
 
 #### Automated
 
-- [ ] 3.1 Tests, lint and build pass
-- [ ] 3.2 NewFlashcardForm still renders ids front/back
+- [x] 3.1 Tests, lint and build pass
+- [x] 3.2 NewFlashcardForm still renders ids front/back
 
 #### Manual
 
-- [ ] 3.3 Reject/edit/save lands on /deck with correct sources and counts
-- [ ] 3.4 Revert and whitespace-only edits save as ai
-- [ ] 3.5 Discard all records 0/0/N, clears list, keeps text
-- [ ] 3.6 Generate is locked while a review is pending
-- [ ] 3.7 Invalid kept card blocks save; rejected invalid card does not
-- [ ] 3.8 Unload guard prompts while pending, not after save
-- [ ] 3.9 Lost-response retry writes a single set of rows
-- [ ] 3.10 NewFlashcardForm still works
+- [x] 3.3 Reject/edit/save lands on /deck with correct sources and counts
+- [x] 3.4 Revert and whitespace-only edits save as ai
+- [x] 3.5 Discard all records 0/0/N, clears list, keeps text
+- [x] 3.6 Generate is locked while a review is pending
+- [x] 3.7 Invalid kept card blocks save; rejected invalid card does not
+- [x] 3.8 Unload guard prompts while pending, not after save
+- [x] 3.9 Lost-response retry writes a single set of rows
+- [x] 3.10 NewFlashcardForm still works
 
 ### Phase 4: Release
 
