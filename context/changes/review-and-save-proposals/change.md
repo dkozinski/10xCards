@@ -1,9 +1,9 @@
 ---
 change_id: review-and-save-proposals
 title: Review and save proposals
-status: planned
+status: impl_reviewed
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
 archived_at: null
 ---
 

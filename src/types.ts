@@ -5,13 +5,18 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/db/database.types";
 
 export type FlashcardDto = Tables<"flashcards">;
 
-// user_id is omitted on purpose: the column defaults to auth.uid()
+// flashcards.source is text + CHECK in the DB, so the generated type is a plain
+// string; this union mirrors flashcards_source_check.
+export type FlashcardSource = "manual" | "ai" | "ai_edited";
+
+// user_id is omitted on purpose: the column defaults to auth.uid(); source is
+// omitted too, so manual cards default to 'manual'
 export type CreateFlashcardCommand = Pick<TablesInsert<"flashcards">, "front" | "back">;
 
 export type UpdateFlashcardCommand = Pick<TablesUpdate<"flashcards">, "front" | "back">;
 
-// An unsaved AI draft, not a DB row. Already valid under createFlashcardSchema,
-// so S-03 can save it as a CreateFlashcardCommand unchanged.
+// An unsaved AI draft, not a DB row. Already valid under createFlashcardSchema;
+// the source ('ai' or 'ai_edited') is decided at save time, after review.
 export type FlashcardProposalDto = CreateFlashcardCommand;
 
 export interface GenerateProposalsCommand {
@@ -20,4 +25,17 @@ export interface GenerateProposalsCommand {
 
 export interface ProposalsResponseDto {
   proposals: FlashcardProposalDto[];
+}
+
+// Body of POST /api/generations: the kept cards of one reviewed generation.
+// generation_id is minted by the client and reused on retry (idempotency key);
+// cards may be empty when every proposal was rejected.
+export interface SaveGenerationCommand {
+  generation_id: string;
+  generated_count: number;
+  cards: (FlashcardProposalDto & { source: Exclude<FlashcardSource, "manual"> })[];
+}
+
+export interface SaveGenerationResponseDto {
+  saved_count: number;
 }

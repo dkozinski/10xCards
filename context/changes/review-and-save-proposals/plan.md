@@ -68,6 +68,7 @@ Verify with `npx supabase test db`, `npm test`, `npm run lint`, `npm run build`,
 - **No editing or deleting of saved cards.** That is S-04.
 - **No dashboard or query for the 75% metrics.** The data becomes computable; reporting is out of scope.
 - **No server-side verification of `ai` vs `ai_edited`.** The client asserts it, because the server never sees the originals, and the metrics only concern the caller's own data.
+- **No DB-level freeze of `source` or the counts.** The owner keeps table-wide UPDATE on `flashcards` and INSERT on `generations` (the function is `security invoker`), so a direct API call can relabel or invent their own rows. Accepted: the metrics are self-reported, and column-level grants would become a trap for every future user-editable column (impl-review phase 1, F1).
 - **No preserved order of cards within one save.** They come back in arbitrary order within the batch.
 - **No component-test infrastructure** (jsdom or testing-library). UI behaviour is verified manually, as in S-01 and S-02.
 - **No new API error code.** The existing vocabulary covers every outcome.
@@ -89,6 +90,7 @@ Database first, then backend, then UI:
   - Two concurrent identical requests serialize on the primary-key index, so the second one becomes a replay.
 - **Save-success navigation vs `beforeunload`.** Disarm the unload guard before calling `window.location.assign("/deck")`, or the user gets a "Leave site?" prompt after a successful save.
 - **The client keeps the same `generation_id` across retries.** It is minted once when proposals arrive, never per click. A new id per click would defeat idempotency.
+  - The idempotency key protects one specific payload, so after an ambiguous failure the list is frozen and the retry resends the identical command (Phase 3 §2).
 
 ## Phase 1: Database (local only)
 
@@ -136,6 +138,7 @@ Add `flashcards.source`, the `generations` table and the `save_generation` funct
   - `language plpgsql security invoker set search_path = ''`.
   - It validates that `p_cards` is an array whose every element's `source` is `ai` or `ai_edited`; otherwise it raises with `errcode = '22023'`.
   - Count bounds are left to the table CHECKs (`23514`).
+  - Content is not re-validated: the function's guarantees are the DB constraints, and content validation is zod's job in the route. A missing `front`/`back` key gives NULL and raises `23502` (not `23514`), and the `btrim` CHECK only strips spaces, so a tab-only front passes the DB.
 - **Function grants**:
   - `revoke execute … from public, anon`.
   - `grant execute … to authenticated, service_role`.
@@ -193,7 +196,7 @@ return v_total;
   - **Happy path**: 5 generated, cards 2×`ai` + 1×`ai_edited` → returns 3, A sees 3 cards with the right sources, and a generations row 2/1/2.
   - **Zero cards**: 4 generated with `'[]'` → returns 0, row 0/0/4, no cards.
   - **Replay** of the happy-path id → returns 3, and the card and generation counts are unchanged.
-  - **Atomicity**: a payload with one blank `front` → `throws_ok` `23514`, and zero rows in both tables for that id.
+  - **Atomicity**: a payload with one explicit blank `front` (`"   "`, key present) → `throws_ok` `23514`, and zero rows in both tables for that id.
   - **Bounds**: more cards than `generated_count` → `23514`; `generated_count` 21 → `23514`; a card with `source` `manual` → `22023`.
 - **As user B**
   - B sees none of A's generations.
@@ -386,8 +389,13 @@ Rebuild the proposals section of the island into the review list. Add the dynami
   - 200 with a numeric `saved_count`, and N = 0: call `onDiscarded()`.
   - `validation_failed`: map `cards.<i>.<field>` back to the i-th **kept** item and open its editor.
   - `unauthorized`: "Your session has expired…", not retryable.
-  - Anything else (network error, timeout, malformed 200): "Could not save. Please try again." with Try again. A retry is safe because the same `generationId` is resent.
+  - Anything else (network error, timeout, 5xx, malformed 200): "Could not save. Please try again." with Try again. A retry is safe because the same `generationId` is resent.
   - The list state survives every error.
+- **Frozen after an ambiguous failure** (network error, timeout, 5xx, malformed 200 — the server may have committed):
+  - Keep the exact `SaveGenerationCommand` that was sent and set `frozen`. Every per-item control and the action button are disabled; only Try again is active, and it resends that same command.
+  - Reason: a committed first attempt turns the retry into a replay that ignores the new payload, so any change made in between would be silently dropped (a re-rejected card still lands in the deck, or "Discard all" clears a list whose cards were already saved).
+  - After the 200, branch on the **sent** command's `cards.length` (> 0 → `/deck`, 0 → `onDiscarded()`), not on the current kept count.
+  - `validation_failed` and `unauthorized` are unambiguous (nothing was written), so they do not freeze the list.
 - **Copy**: replace "Preview only…" with a one-line instruction, e.g. "Reject what you don't want, edit what's almost right, then save."
 - The always-mounted sr-only region announces kept/total after each change.
 
@@ -429,7 +437,7 @@ All on the local stack via `npm run dev`:
 - **Generate lock**: Generate is disabled with the hint while the list is shown, and enabled again after Discard.
 - **Card validation**: clear a kept card's front, click Save, and the editor opens with the error and nothing is sent. A rejected invalid card does not block the save.
 - **Unload guard**: with a list shown, closing the tab or clicking Topbar → Deck triggers the native prompt. After a successful save there is no prompt.
-- **Lost response**: stop the dev server mid-save (or use the DevTools offline toggle), retry after restoring, and confirm a single set of rows in Studio.
+- **Lost response**: stop the dev server mid-save (or use the DevTools offline toggle). The list freezes with only Try again active. Retry after restoring, and confirm a single set of rows in Studio.
 - `NewFlashcardForm` on `/deck` still works.
 
 **Implementation Note**: After manual verification, pause for the owner's confirmation before Phase 4.
@@ -550,15 +558,15 @@ This touches production (Supabase cloud). It is irreversible except by a new for
 
 #### Automated
 
-- [ ] 1.1 Migration applies on the local stack
-- [ ] 1.2 pgTAP passes, old and new suites
-- [ ] 1.3 Types regenerate and contain generations and save_generation
-- [ ] 1.4 Existing tests, lint and build still pass
+- [x] 1.1 Migration applies on the local stack
+- [x] 1.2 pgTAP passes, old and new suites
+- [x] 1.3 Types regenerate and contain generations and save_generation
+- [x] 1.4 Existing tests, lint and build still pass
 
 #### Manual
 
-- [ ] 1.5 Studio shows RLS + 8 policies on generations and the function exists
-- [ ] 1.6 Function call without a session is rejected
+- [x] 1.5 Studio shows RLS + 8 policies on generations and the function exists
+- [x] 1.6 Function call without a session is rejected
 
 ### Phase 2: Backend — validation, service, route
 
