@@ -558,28 +558,28 @@ This touches production (Supabase cloud). It is irreversible except by a new for
 
 #### Automated
 
-- [x] 1.1 Migration applies on the local stack
-- [x] 1.2 pgTAP passes, old and new suites
-- [x] 1.3 Types regenerate and contain generations and save_generation
-- [x] 1.4 Existing tests, lint and build still pass
+- [x] 1.1 Migration applies on the local stack — 481455b
+- [x] 1.2 pgTAP passes, old and new suites — 481455b
+- [x] 1.3 Types regenerate and contain generations and save_generation — 481455b
+- [x] 1.4 Existing tests, lint and build still pass — 481455b
 
 #### Manual
 
-- [x] 1.5 Studio shows RLS + 8 policies on generations and the function exists
-- [x] 1.6 Function call without a session is rejected
+- [x] 1.5 Studio shows RLS + 8 policies on generations and the function exists — 481455b
+- [x] 1.6 Function call without a session is rejected — 481455b
 
 ### Phase 2: Backend — validation, service, route
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass including new suites
-- [ ] 2.2 Lint passes
-- [ ] 2.3 Build passes
-- [ ] 2.4 New tests are non-vacuous (mutation-checked)
+- [x] 2.1 Unit tests pass including new suites
+- [x] 2.2 Lint passes
+- [x] 2.3 Build passes
+- [x] 2.4 New tests are non-vacuous (mutation-checked)
 
 #### Manual
 
-- [ ] 2.5 curl against local stack: save, replay, invalid card, no cookie
+- [x] 2.5 curl against local stack: save, replay, invalid card, no cookie
 
 ### Phase 3: UI — review list and save
 
