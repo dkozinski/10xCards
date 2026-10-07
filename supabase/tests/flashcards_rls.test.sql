@@ -13,7 +13,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(31);
 
 -- fixtures (as postgres)
 insert into auth.users (id, email) values
@@ -96,8 +96,24 @@ select is(
   'B cannot read A''s cards'
 );
 
-update public.flashcards set front = 'hacked by B' where id = '00000000-0000-0000-0000-0000000000c1';
-delete from public.flashcards where id = '00000000-0000-0000-0000-0000000000c1';
+-- row_count is read from B's side: the statements must match nothing, not fail
+select lives_ok(
+  $$ do $d$ declare n int; begin
+       update public.flashcards set front = 'hacked by B' where id = '00000000-0000-0000-0000-0000000000c1';
+       get diagnostics n = row_count;
+       if n <> 0 then raise exception 'B updated % rows', n; end if;
+     end $d$ $$,
+  'B''s update of A''s card affects 0 rows'
+);
+
+select lives_ok(
+  $$ do $d$ declare n int; begin
+       delete from public.flashcards where id = '00000000-0000-0000-0000-0000000000c1';
+       get diagnostics n = row_count;
+       if n <> 0 then raise exception 'B deleted % rows', n; end if;
+     end $d$ $$,
+  'B''s delete of A''s card affects 0 rows'
+);
 
 select throws_ok(
   $$ insert into public.flashcards (user_id, front, back)
@@ -133,6 +149,18 @@ select throws_ok(
   'A cannot hand an own card to B'
 );
 
+select lives_ok(
+  $$ update public.flashcards set front = 'Q1 fixed', back = 'A1 fixed'
+     where id = '00000000-0000-0000-0000-0000000000c1' $$,
+  'A can edit an own card'
+);
+
+select is(
+  (select front || '/' || back from public.flashcards where id = '00000000-0000-0000-0000-0000000000c1'),
+  'Q1 fixed/A1 fixed',
+  'A''s edit is stored'
+);
+
 -- content constraints, as the owner so RLS passes and the CHECK is reached
 
 select throws_ok(
@@ -161,6 +189,31 @@ select lives_ok(
   'front of exactly 200 and back of exactly 500 characters are accepted'
 );
 
+select throws_ok(
+  $$ update public.flashcards set front = '   ' where id = '00000000-0000-0000-0000-0000000000c1' $$,
+  '23514',
+  null,
+  'an edit to a blank front is rejected'
+);
+
+select throws_ok(
+  $$ update public.flashcards set back = repeat('x', 501) where id = '00000000-0000-0000-0000-0000000000c1' $$,
+  '23514',
+  null,
+  'an edit to a back longer than 500 characters is rejected'
+);
+
+select lives_ok(
+  $$ delete from public.flashcards where id = '00000000-0000-0000-0000-0000000000c1' $$,
+  'A can delete an own card'
+);
+
+select is(
+  (select count(*)::int from public.flashcards where id = '00000000-0000-0000-0000-0000000000c1'),
+  0,
+  'A''s delete removed the card'
+);
+
 -- as anon: no table privileges at all, so every access raises 42501 before
 -- RLS is consulted (the anon deny policies are the second layer)
 
@@ -181,6 +234,20 @@ select throws_ok(
   '42501',
   null,
   'anon cannot insert'
+);
+
+select throws_ok(
+  $$ update public.flashcards set front = 'x' $$,
+  '42501',
+  null,
+  'anon cannot update'
+);
+
+select throws_ok(
+  $$ delete from public.flashcards $$,
+  '42501',
+  null,
+  'anon cannot delete'
 );
 
 -- account deletion cascades to the account's cards

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "@/db/database.types";
-import { listFlashcards } from "./flashcards";
+import { deleteFlashcard, listFlashcards, updateFlashcard } from "./flashcards";
 
 interface Result {
   data?: unknown;
@@ -56,5 +56,67 @@ describe("listFlashcards", () => {
     const error = { code: "42501" };
     const { client } = stubClient([{ error }]);
     await expect(listFlashcards(client, { from: 0, to: 49 })).rejects.toBe(error);
+  });
+});
+
+// Builder for the mutations: update/delete/eq/select chain, and both
+// maybeSingle() and a bare await resolve to the given result.
+function stubMutation(result: Result) {
+  const resolved = () => Promise.resolve({ data: null, error: null, ...result });
+  const builder = {
+    update: vi.fn(() => builder),
+    delete: vi.fn(() => builder),
+    eq: vi.fn(() => builder),
+    select: vi.fn(() => builder),
+    maybeSingle: vi.fn(resolved),
+    then: (resolve: (r: unknown) => unknown) => resolved().then(resolve),
+  };
+  const client = { from: vi.fn(() => builder) } as unknown as SupabaseClient<Database>;
+  return { client, builder };
+}
+
+describe("updateFlashcard", () => {
+  it("sends only front and back for the addressed id and returns the row", async () => {
+    const { client, builder } = stubMutation({ data: { id: "a", front: "Q", back: "A" } });
+    await expect(updateFlashcard(client, "a", { front: "Q", back: "A" })).resolves.toEqual({
+      id: "a",
+      front: "Q",
+      back: "A",
+    });
+    expect(builder.update).toHaveBeenCalledWith({ front: "Q", back: "A" });
+    expect(builder.eq).toHaveBeenCalledWith("id", "a");
+    expect(builder.maybeSingle).toHaveBeenCalled();
+  });
+
+  it("returns null when no row matched (missing or another user's card)", async () => {
+    const { client } = stubMutation({ data: null });
+    await expect(updateFlashcard(client, "a", { front: "Q", back: "A" })).resolves.toBeNull();
+  });
+
+  it("throws a database error", async () => {
+    const error = { code: "23514" };
+    const { client } = stubMutation({ error });
+    await expect(updateFlashcard(client, "a", { front: "Q", back: "A" })).rejects.toBe(error);
+  });
+});
+
+describe("deleteFlashcard", () => {
+  it("deletes the addressed id and reports success", async () => {
+    const { client, builder } = stubMutation({ data: [{ id: "a" }] });
+    await expect(deleteFlashcard(client, "a")).resolves.toBe(true);
+    expect(builder.delete).toHaveBeenCalled();
+    expect(builder.eq).toHaveBeenCalledWith("id", "a");
+    expect(builder.select).toHaveBeenCalledWith("id");
+  });
+
+  it("reports false when no row was deleted", async () => {
+    const { client } = stubMutation({ data: [] });
+    await expect(deleteFlashcard(client, "a")).resolves.toBe(false);
+  });
+
+  it("throws a database error", async () => {
+    const error = { code: "42501" };
+    const { client } = stubMutation({ error });
+    await expect(deleteFlashcard(client, "a")).rejects.toBe(error);
   });
 });

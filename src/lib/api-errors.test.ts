@@ -6,6 +6,7 @@ describe("apiError", () => {
     ["validation_failed", 400],
     ["invalid_json", 400],
     ["unauthorized", 401],
+    ["not_found", 404],
     ["server_error", 500],
     ["generation_failed", 502],
   ])("%s responds with %i and the shared body shape", async (code, status) => {

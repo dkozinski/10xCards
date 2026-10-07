@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/db/database.types";
-import type { CreateFlashcardCommand, FlashcardDto } from "@/types";
+import type { CreateFlashcardCommand, FlashcardDto, UpdateFlashcardCommand } from "@/types";
 
 // The only module that queries public.flashcards directly (save_generation, called
 // from services/generations.ts, also inserts cards). It takes the request-scoped
@@ -20,6 +20,31 @@ export async function createFlashcard(supabase: Client, cmd: CreateFlashcardComm
     .single();
   if (error) throw error;
   return data;
+}
+
+// RLS turns another user's card into "no row", not an error, so null covers
+// both a missing and a foreign id. maybeSingle() keeps "no row" a value
+// instead of the PGRST116 error single() would raise.
+export async function updateFlashcard(
+  supabase: Client,
+  id: string,
+  cmd: UpdateFlashcardCommand,
+): Promise<FlashcardDto | null> {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .update({ front: cmd.front, back: cmd.back })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// Returns false when no row was deleted (missing or another user's card).
+export async function deleteFlashcard(supabase: Client, id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("flashcards").delete().eq("id", id).select("id");
+  if (error) throw error;
+  return data.length > 0;
 }
 
 export async function listFlashcards(
