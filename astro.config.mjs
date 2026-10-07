@@ -15,7 +15,7 @@ export default defineConfig({
   },
   adapter: cloudflare(),
   // Already Astro's default; stated because the cookie-authenticated JSON routes
-  // (POST /api/flashcards, POST /api/proposals) rely on it: they read the body
+  // (POST /api/flashcards, POST /api/proposals, POST /api/generations) rely on it: they read the body
   // without checking Content-Type, so a cross-site text/plain POST is stopped
   // only by this origin check.
   security: { checkOrigin: true },

@@ -9,6 +9,7 @@ export type Database = {
           created_at: string;
           front: string;
           id: string;
+          source: string;
           user_id: string;
         };
         Insert: {
@@ -16,6 +17,7 @@ export type Database = {
           created_at?: string;
           front: string;
           id?: string;
+          source?: string;
           user_id?: string;
         };
         Update: {
@@ -23,6 +25,37 @@ export type Database = {
           created_at?: string;
           front?: string;
           id?: string;
+          source?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      generations: {
+        Row: {
+          accepted_edited_count: number;
+          accepted_unedited_count: number;
+          created_at: string;
+          generated_count: number;
+          id: string;
+          rejected_count: number;
+          user_id: string;
+        };
+        Insert: {
+          accepted_edited_count: number;
+          accepted_unedited_count: number;
+          created_at?: string;
+          generated_count: number;
+          id: string;
+          rejected_count: number;
+          user_id?: string;
+        };
+        Update: {
+          accepted_edited_count?: number;
+          accepted_unedited_count?: number;
+          created_at?: string;
+          generated_count?: number;
+          id?: string;
+          rejected_count?: number;
           user_id?: string;
         };
         Relationships: [];
@@ -32,7 +65,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      save_generation: {
+        Args: {
+          p_cards: Json;
+          p_generated_count: number;
+          p_generation_id: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

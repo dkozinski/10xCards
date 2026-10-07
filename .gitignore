@@ -55,3 +55,6 @@ pnpm-debug.log*
 .dev.vars*
 !.dev.vars.example
 .wrangler/
+
+# supabase studio saves SQL editor queries here
+supabase/snippets/

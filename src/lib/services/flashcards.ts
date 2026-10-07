@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/db/database.types";
 import type { CreateFlashcardCommand, FlashcardDto } from "@/types";
 
-// The only module that queries public.flashcards. It takes the request-scoped
+// The only module that queries public.flashcards directly (save_generation, called
+// from services/generations.ts, also inserts cards). It takes the request-scoped
 // client, so RLS limits every query to the caller; it never filters by or sends
 // user_id itself (the column defaults to auth.uid()).
 
