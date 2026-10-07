@@ -1,10 +1,10 @@
 ---
 change_id: review-and-save-proposals
 title: Review and save proposals
-status: impl_reviewed
+status: archived
 created: 2026-10-05
-updated: 2026-10-06
-archived_at: null
+updated: 2026-10-07
+archived_at: 2026-10-07T19:21:26Z
 ---
 
 ## Notes

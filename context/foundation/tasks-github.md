@@ -13,8 +13,8 @@
 
 | Construct | State |
 | --- | --- |
-| Milestone `M-1: Paste-to-review loop` (#1) | open — 11 open / 2 closed |
-| Issues #1–#13 | #7 closed (F-01 done 2026-09-23), #9 closed (S-01 done 2026-09-28), rest open |
+| Milestone `M-1: Paste-to-review loop` (#1) | open — 7 open / 6 closed |
+| Issues #1–#13 | closed: #7 (F-01, 2026-09-23), #9 (S-01, 2026-09-28), #8 (S-02, 2026-10-01), #2 + #3 (Q-2/Q-3 answered 2026-10-05), #10 (S-03, 2026-10-07); rest open |
 | 9 custom labels | created |
 | 9 native "blocked by" dependencies | created |
 | Projects board "10xCards Roadmap" | **not created yet** — token now has `project` scope; step pending |
@@ -39,9 +39,9 @@
 | Issue | Roadmap ID | Change ID | Labels | Blocked by |
 | --- | --- | --- | --- | --- |
 | #7 | F-01 | `deck-data-contract` | `type:foundation` `stream:A-deck` — **closed** | — |
-| #8 | S-02 | `ai-proposals-from-text` | `type:slice` `status:ready` `stream:B-ai` | — |
+| #8 | S-02 | `ai-proposals-from-text` | `type:slice` `stream:B-ai` — **closed** | — |
 | #9 | S-01 | `manual-card-and-deck` | `type:slice` `stream:A-deck` — **closed** | #7 (closed) |
-| #10 | S-03 | `review-and-save-proposals` | `type:slice` `status:blocked` `stream:B-ai` `north-star` | #9 (closed), #8, #2, #3 |
+| #10 | S-03 | `review-and-save-proposals` | `type:slice` `stream:B-ai` `north-star` — **closed** | #9, #8, #2, #3 (all closed) |
 | #11 | S-04 | `edit-and-delete-cards` | `type:slice` `status:ready` `stream:A-deck` | #9 (closed) |
 | #12 | S-05 | `srs-review-session` | `type:slice` `status:ready` `stream:C-review` | #9 (closed) |
 | #13 | S-06 | `account-and-data-deletion` | `type:slice` `status:proposed` `stream:C-review` | #9 (closed), #12 |
@@ -49,8 +49,8 @@
 | Issue | Question | Blocks | Blocking? |
 | --- | --- | --- | --- |
 | #1 | Q-1 Character limit on pasted text | S-02 (#8) | no — body link only |
-| #2 | Q-2 Are rejections recorded in aggregate? | S-03 (#10) | **yes** — native dependency |
-| #3 | Q-3 Does an edited proposal count as AI-created? | S-03 (#10) | **yes** — native dependency |
+| #2 | Q-2 Are rejections recorded in aggregate? — **closed** (yes: `generations` counts) | S-03 (#10) | **yes** — native dependency |
+| #3 | Q-3 Does an edited proposal count as AI-created? — **closed** (yes: `source` = `ai_edited`) | S-03 (#10) | **yes** — native dependency |
 | #4 | Q-4 Grade history on edit: keep or reset? | S-04, S-05 | no — body link only |
 | #5 | Q-5 How is account deletion confirmed? | S-06 (#13) | no — body link only |
 | #6 | Q-6 Automated checks for the two guardrails? | roadmap-wide | no |
@@ -75,9 +75,9 @@ graph LR
 ```
 
 > [!TIP]
-> **Where to start:** #8 (S-02), #11 (S-04) and #12 (S-05) have no open blockers and are labelled
-> `status:ready` (#7 F-01 and #9 S-01 are closed). To unblock the north star (#10) you have to **answer**
-> #2 and #3. Those are product decisions, not code.
+> **Where to start:** #11 (S-04) and #12 (S-05) have no open blockers and are labelled `status:ready`.
+> F-01, S-01, S-02 and the north star S-03 (#10) are closed. #13 (S-06) stays `status:proposed` until #12
+> closes.
 
 ## Label vocabulary
 
@@ -141,6 +141,11 @@ mirror the same in Linear (see `tasks-linear.md`). Next: `/10x-new manual-card-a
 hand after the production smoke check, with a comment linking the PR and the archive. Then #11 and #12:
 `status:proposed` → `status:ready` and their "Ready for `/10x-plan`" field updated. #13 stays
 `status:proposed` because it still waits on #12. Lesson: put `Closes #N` in the slice PR.
+
+**Example (S-03, done 2026-10-07):** #2 and #3 were answered with a **Decision** comment and closed on
+2026-10-05; #10 was then closed automatically by `Closes #10` in PR #26. Afterwards: tick #10's
+"Done when" boxes, drop its `status:*` label, and mirror in Linear (DAW-6/7/14 → `Done`, Decision
+comments copied). The mirrors were not synced after S-02, so #8 / DAW-12 were caught up in the same pass.
 
 ## `gh` cheatsheet
 

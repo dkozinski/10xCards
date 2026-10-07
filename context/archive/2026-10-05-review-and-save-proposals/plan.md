@@ -603,12 +603,12 @@ This touches production (Supabase cloud). It is irreversible except by a new for
 
 #### Automated
 
-- [ ] 4.1 CI green on the PR
-- [ ] 4.2 Dry run lists exactly one migration
-- [ ] 4.3 Schema parity after push
+- [x] 4.1 CI green on the PR — e70af16
+- [x] 4.2 Dry run lists exactly one migration — e70af16
+- [x] 4.3 Schema parity after push — e70af16
 
 #### Manual
 
-- [ ] 4.4 Owner go-ahead before db push
-- [ ] 4.5 Production smoke check (save and discard)
-- [ ] 4.6 db dump grants match pgTAP expectations
+- [x] 4.4 Owner go-ahead before db push — e70af16
+- [x] 4.5 Production smoke check (save and discard) — e70af16
+- [x] 4.6 db dump grants match pgTAP expectations — e70af16

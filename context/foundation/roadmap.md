@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-06
+updated: 2026-10-07
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -49,7 +49,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | F-01  | deck-data-contract         | (foundation) a per-user flashcard store exists and is owner-only  | —             | § Access Control, NFR data isolation, NFR durability; enables FR-008–FR-011 | done |
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
-| S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | in-progress |
+| S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | ready    |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
@@ -128,7 +128,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** — (PRD Open Questions 2 and 3 resolved 2026-10-05: per-generation counts in a `generations` table; `flashcards.source` = `manual` | `ai` | `ai_edited`.)
 - **Risk:** Was blocked on purpose until the owner answered. Both questions decided whether this slice writes one thing (the kept cards) or two (the kept cards plus a record of what was discarded), and that is a different shape of work, not a detail to settle mid-implementation. Answering them costs the owner minutes; discovering them after the slice is built costs a rewrite of its write path. The PRD's own success criteria cannot be evaluated at all if the answer is "nothing is recorded", so this is a product decision, not a technical one. Sequenced after S-01 and S-02 because it is the join point of both — it needs somewhere to save and something to save. The answer is "two things", so the save must write the cards and the generation record atomically.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-04: Edit and delete saved cards
 
@@ -217,3 +217,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 - **F-01: (foundation) a flashcard store exists that belongs to exactly one account, with per-operation access rules and typed shapes the rest of the app can build on — no user-visible change.** — Archived 2026-09-23 → `context/archive/2026-09-22-deck-data-contract/`. Lesson: —.
 - **S-01: The user can write a flashcard themselves and see it in their own deck, which survives logging out and coming back on another machine.** — Archived 2026-09-28 → `context/archive/2026-09-28-manual-card-and-deck/`. Lesson: —.
 - **S-02: The user can paste source text, ask for flashcards, watch visible progress while the request runs, and see the drafted proposals on screen.** — Archived 2026-10-01 → `context/archive/2026-09-29-ai-proposals-from-text/`. Lesson: —.
+- **S-03: The user can scan the proposals, reject the bad ones, edit the almost-good ones, and save the rest into their deck in one deliberate action.** — Archived 2026-10-07 → `context/archive/2026-10-05-review-and-save-proposals/`. Lesson: —.
