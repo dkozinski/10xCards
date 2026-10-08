@@ -346,9 +346,9 @@ There is no schema change. Rollback is a code revert only.
 
 #### Automated
 
-- [ ] 3.1 CI green on the PR
-- [ ] 3.2 Workers Builds green on the merge commit
+- [x] 3.1 CI green on the PR
+- [x] 3.2 Workers Builds green on the merge commit
 
 #### Manual
 
-- [ ] 3.3 Production smoke check (edit and delete), logs free of card text
+- [x] 3.3 Production smoke check (edit and delete), logs free of card text
