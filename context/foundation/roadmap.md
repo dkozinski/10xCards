@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-07
+updated: 2026-10-08
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -50,7 +50,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
-| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | in-progress |
+| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | done        |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
 
@@ -141,7 +141,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - When a saved card's text is edited, is its grade history kept or reset? (PRD Open Question 4) — Owner: downstream decision, tied to the scheduling algorithm chosen in S-05. Block: no.
 - **Risk:** Small and self-contained, which is why it sits here rather than competing with S-03 for attention. The open question does not block it: until S-05 lands there is no grade history to preserve or reset, so this slice can ship its edit path and the question resurfaces — with an answer available — inside S-05. Deleting a card that a later review session might hold a reference to is the one place this slice touches the reliability guardrail, and it is the reason deletion is specified here rather than assumed.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Run a review session
 
@@ -218,3 +218,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 - **S-01: The user can write a flashcard themselves and see it in their own deck, which survives logging out and coming back on another machine.** — Archived 2026-09-28 → `context/archive/2026-09-28-manual-card-and-deck/`. Lesson: —.
 - **S-02: The user can paste source text, ask for flashcards, watch visible progress while the request runs, and see the drafted proposals on screen.** — Archived 2026-10-01 → `context/archive/2026-09-29-ai-proposals-from-text/`. Lesson: —.
 - **S-03: The user can scan the proposals, reject the bad ones, edit the almost-good ones, and save the rest into their deck in one deliberate action.** — Archived 2026-10-07 → `context/archive/2026-10-05-review-and-save-proposals/`. Lesson: —.
+- **S-04: The user can correct the wording of a card already in their deck, or remove it for good.** — Archived 2026-10-08 → `context/archive/2026-10-07-edit-and-delete-cards/`. Lesson: —.
