@@ -13,7 +13,9 @@ export type FlashcardSource = "manual" | "ai" | "ai_edited";
 // omitted too, so manual cards default to 'manual'
 export type CreateFlashcardCommand = Pick<TablesInsert<"flashcards">, "front" | "back">;
 
-export type UpdateFlashcardCommand = Pick<TablesUpdate<"flashcards">, "front" | "back">;
+// A full replacement of the card's text. source is never part of an edit: it
+// records where the card came from, and an edit after save does not change that.
+export type UpdateFlashcardCommand = Required<Pick<TablesUpdate<"flashcards">, "front" | "back">>;
 
 // An unsaved AI draft, not a DB row. Already valid under createFlashcardSchema;
 // the source ('ai' or 'ai_edited') is decided at save time, after review.

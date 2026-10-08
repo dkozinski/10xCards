@@ -18,10 +18,23 @@ interface CardFieldProps {
   rows: number;
   placeholder: string;
   error?: string;
+  // read-only rather than disabled, so a focused field keeps focus during a request
+  readOnly?: boolean;
   onChange: (value: string) => void;
 }
 
-export function CardField({ id, name, label, value, max, rows, placeholder, error, onChange }: CardFieldProps) {
+export function CardField({
+  id,
+  name,
+  label,
+  value,
+  max,
+  rows,
+  placeholder,
+  error,
+  readOnly,
+  onChange,
+}: CardFieldProps) {
   const errorId = `${id}-error`;
   // the schema measures the trimmed value, so the counter does too
   const length = value.trim().length;
@@ -41,6 +54,7 @@ export function CardField({ id, name, label, value, max, rows, placeholder, erro
         rows={rows}
         value={value}
         placeholder={placeholder}
+        readOnly={readOnly}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         onChange={(e) => {

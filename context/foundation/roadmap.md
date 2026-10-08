@@ -50,7 +50,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-01  | manual-card-and-deck       | write a flashcard by hand and see it in their own deck            | F-01          | FR-008, FR-009, NFR durability, NFR data isolation                    | done |
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
-| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | ready    |
+| S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | in-progress |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
 
@@ -141,7 +141,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - When a saved card's text is edited, is its grade history kept or reset? (PRD Open Question 4) — Owner: downstream decision, tied to the scheduling algorithm chosen in S-05. Block: no.
 - **Risk:** Small and self-contained, which is why it sits here rather than competing with S-03 for attention. The open question does not block it: until S-05 lands there is no grade history to preserve or reset, so this slice can ship its edit path and the question resurfaces — with an answer available — inside S-05. Deleting a card that a later review session might hold a reference to is the one place this slice touches the reliability guardrail, and it is the reason deletion is specified here rather than assumed.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-05: Run a review session
 

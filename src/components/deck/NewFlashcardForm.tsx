@@ -41,7 +41,10 @@ export default function NewFlashcardForm() {
       // Partial: a proxy or platform error page may answer with JSON of another shape
       const body = (await response.json().catch(() => null)) as Partial<ApiErrorBody> | null;
       if (body?.error?.code === "validation_failed" && body.error.details) {
-        setErrors(firstErrors(body.error.details.fieldErrors));
+        const fields = firstErrors(body.error.details.fieldErrors);
+        setErrors(fields);
+        // e.g. only _root (body too large): nothing to show under a field
+        if (!fields.front && !fields.back) setServerError("Could not save the flashcard. Please try again.");
       } else if (body?.error?.code === "unauthorized") {
         setServerError("Your session has expired. Sign in again to save this card.");
       } else {
