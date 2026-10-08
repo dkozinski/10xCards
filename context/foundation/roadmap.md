@@ -178,7 +178,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-01       | #9    | `manual-card-and-deck`     | Write a flashcard by hand and see it in your deck             | yes                   | Done 2026-09-28 (PR #20) |
 | S-02       | #8    | `ai-proposals-from-text`   | Draft flashcard proposals from pasted text                    | yes                   | No prerequisites; can run in parallel with F-01 |
 | S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | yes                   | Q-2/Q-3 resolved 2026-10-05 (#2, #3 closed) |
-| S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | yes                   | S-01 done 2026-09-28 |
+| S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | yes                   | Done 2026-10-08 (PR #28) |
 | S-05       | #12   | `srs-review-session`       | Run a scheduled review session over the deck                  | yes                   | S-01 done 2026-09-28; picks the scheduling algorithm |
 | S-06       | #13   | `account-and-data-deletion`| Delete the account and all of its data                        | no                    | Waits on S-01 and S-05 |
 
