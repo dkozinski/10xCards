@@ -315,32 +315,32 @@ There is no schema change. Rollback is a code revert only.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass including new route, service and vocabulary tests
-- [x] 1.2 Lint passes
-- [x] 1.3 Build passes
-- [x] 1.4 pgTAP passes on the local stack
-- [x] 1.5 New tests are non-vacuous (mutation-checked)
+- [x] 1.1 Unit tests pass including new route, service and vocabulary tests — d57481f
+- [x] 1.2 Lint passes — d57481f
+- [x] 1.3 Build passes — d57481f
+- [x] 1.4 pgTAP passes on the local stack — d57481f
+- [x] 1.5 New tests are non-vacuous (mutation-checked) — d57481f
 
 #### Manual
 
-- [x] 1.6 curl against local stack: edit, extra source ignored, foreign 404, delete twice, no cookie
+- [x] 1.6 curl against local stack: edit, extra source ignored, foreign 404, delete twice, no cookie — d57481f
 
 ### Phase 2: UI — per-card edit and delete on /deck
 
 #### Automated
 
-- [ ] 2.1 Tests, lint and build pass
+- [x] 2.1 Tests, lint and build pass
 
 #### Manual
 
-- [ ] 2.2 Edit and save updates the card, source unchanged
-- [ ] 2.3 Cancel and no-op save send no request
-- [ ] 2.4 Invalid edit shows field errors without a request
-- [ ] 2.5 Two-step delete: cancel keeps, confirm removes
-- [ ] 2.6 Deleting the last card on a page lands on a non-empty page
-- [ ] 2.7 Editing a card deleted elsewhere shows "no longer exists"
-- [ ] 2.8 Unload guard prompts while a modified edit is open, not after save
-- [ ] 2.9 NewFlashcardForm still works
+- [x] 2.2 Edit and save updates the card, source unchanged
+- [x] 2.3 Cancel and no-op save send no request
+- [x] 2.4 Invalid edit shows field errors without a request
+- [x] 2.5 Two-step delete: cancel keeps, confirm removes
+- [x] 2.6 Deleting the last card on a page lands on a non-empty page
+- [x] 2.7 Editing a card deleted elsewhere shows "no longer exists"
+- [x] 2.8 Unload guard prompts while a modified edit is open, not after save
+- [x] 2.9 NewFlashcardForm still works
 
 ### Phase 3: Release
 

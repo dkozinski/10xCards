@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
+import DeckCard from "@/components/deck/DeckCard";
 import NewFlashcardForm from "@/components/deck/NewFlashcardForm";
 import { pageWindow, parsePage } from "@/lib/pagination";
 import { listFlashcards } from "@/lib/services/flashcards";
@@ -14,11 +15,12 @@ let cards: FlashcardDto[] = [];
 let total = 0;
 let loadFailed = false;
 
+// from/to depend only on the page number, not on the total
+const { from, to } = pageWindow(page, 0);
+
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (supabase) {
   try {
-    // from/to depend only on the page number, not on the total
-    const { from, to } = pageWindow(page, 0);
     ({ items: cards, total } = await listFlashcards(supabase, { from, to }));
   } catch (error) {
     const { code, message } = error as { code?: string; message?: string };
@@ -71,12 +73,9 @@ if (!loadFailed && page > lastPage) {
             <p class="text-sm text-blue-100/60">No flashcards yet. Write your first one above.</p>
           ) : (
             <ul class="space-y-3">
-              {cards.map((card) => (
+              {cards.map((card, index) => (
                 <li class="rounded-lg border border-white/10 bg-white/5 p-4">
-                  <p class="font-medium break-words whitespace-pre-wrap">{card.front}</p>
-                  <p class="mt-2 border-t border-white/10 pt-2 text-sm break-words whitespace-pre-wrap text-blue-100/80">
-                    {card.back}
-                  </p>
+                  <DeckCard client:load card={card} position={from + index + 1} />
                 </li>
               ))}
             </ul>
