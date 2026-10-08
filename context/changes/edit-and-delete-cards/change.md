@@ -1,7 +1,7 @@
 ---
 change_id: edit-and-delete-cards
 title: Edit and delete cards
-status: implementing
+status: impl_reviewed
 created: 2026-10-07
 updated: 2026-10-08
 archived_at: null

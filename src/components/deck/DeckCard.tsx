@@ -17,7 +17,8 @@ const ITEM_BUTTON = "rounded-lg border border-white/20 bg-white/10 text-white tr
 type Mode = "view" | "editing" | "confirmDelete";
 
 interface DeckCardProps {
-  card: FlashcardDto;
+  // only what the island uses: every prop is serialized into the page's HTML
+  card: Pick<FlashcardDto, "id" | "front" | "back">;
   // 1-based position in the whole deck, so screen readers can tell the buttons apart
   position: number;
 }
@@ -34,14 +35,22 @@ export default function DeckCard({ card, position }: DeckCardProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, setPending] = useState<"save" | "delete" | null>(null);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+  const editRef = useRef<HTMLButtonElement>(null);
+  const deleteRef = useRef<HTMLButtonElement>(null);
+  const prevModeRef = useRef<Mode>(mode);
 
   const modified = mode === "editing" && (front.trim() !== card.front || back.trim() !== card.back);
   const { disarm } = useUnsavedChangesGuard(modified);
 
-  // The button that opened a mode is gone after the switch, so focus moves into the new one.
+  // The focused button is gone after every switch: focus moves into the new mode,
+  // and back to the button that opened it on return (never on the first render).
   useEffect(() => {
+    const prev = prevModeRef.current;
+    prevModeRef.current = mode;
+    if (prev === mode) return;
     if (mode === "editing") document.getElementById(`card-${card.id}-front`)?.focus();
     if (mode === "confirmDelete") cancelDeleteRef.current?.focus();
+    if (mode === "view") (prev === "editing" ? editRef : deleteRef).current?.focus();
   }, [mode, card.id]);
 
   function backToView() {
@@ -62,18 +71,28 @@ export default function DeckCard({ card, position }: DeckCardProps) {
         ...init,
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
-      if (response.status === okStatus) {
+      // A delete that finds no card has still reached its goal, e.g. a retry after a
+      // timeout whose first request was already committed.
+      if (response.status === okStatus || (kind === "delete" && response.status === 404)) {
         // Same URL keeps ?page=; the page redirects itself if a delete emptied it.
         // The buttons stay disabled until the navigation replaces the page.
         disarm();
         window.location.assign(window.location.href);
+        // Another card's unsaved-changes prompt can cancel the navigation ("Stay"),
+        // which the page cannot observe; re-enable the buttons if it is still here.
+        setTimeout(() => {
+          setPending(null);
+        }, 1000);
         return;
       }
       // Partial: a proxy or platform error page may answer with JSON of another shape
       const body = (await response.json().catch(() => null)) as Partial<ApiErrorBody> | null;
       const code = body?.error?.code;
       if (code === "validation_failed" && body?.error?.details) {
-        setErrors(firstErrors(body.error.details.fieldErrors));
+        const fields = firstErrors(body.error.details.fieldErrors);
+        setErrors(fields);
+        // e.g. only _root (body too large): nothing to show under a field
+        if (!fields.front && !fields.back) setServerError("Could not save the card. Please try again.");
       } else if (code === "not_found") {
         setServerError("This card no longer exists. Refresh the deck.");
       } else if (code === "unauthorized") {
@@ -124,6 +143,7 @@ export default function DeckCard({ card, position }: DeckCardProps) {
             rows={2}
             placeholder="Question or term"
             error={errors.front}
+            readOnly={busy}
             onChange={(v) => {
               setFront(v);
               if (errors.front) setErrors((prev) => ({ ...prev, front: undefined }));
@@ -138,6 +158,7 @@ export default function DeckCard({ card, position }: DeckCardProps) {
             rows={4}
             placeholder="Answer or definition"
             error={errors.back}
+            readOnly={busy}
             onChange={(v) => {
               setBack(v);
               if (errors.back) setErrors((prev) => ({ ...prev, back: undefined }));
@@ -165,6 +186,7 @@ export default function DeckCard({ card, position }: DeckCardProps) {
             <Button
               type="button"
               size="sm"
+              ref={editRef}
               aria-label={`Edit card ${position}`}
               onClick={() => {
                 setServerError(null);
@@ -178,6 +200,7 @@ export default function DeckCard({ card, position }: DeckCardProps) {
             <Button
               type="button"
               size="sm"
+              ref={deleteRef}
               aria-label={`Delete card ${position}`}
               onClick={() => {
                 setServerError(null);

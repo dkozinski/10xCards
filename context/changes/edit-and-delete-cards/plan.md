@@ -329,18 +329,18 @@ There is no schema change. Rollback is a code revert only.
 
 #### Automated
 
-- [x] 2.1 Tests, lint and build pass
+- [x] 2.1 Tests, lint and build pass — 8259b52
 
 #### Manual
 
-- [x] 2.2 Edit and save updates the card, source unchanged
-- [x] 2.3 Cancel and no-op save send no request
-- [x] 2.4 Invalid edit shows field errors without a request
-- [x] 2.5 Two-step delete: cancel keeps, confirm removes
-- [x] 2.6 Deleting the last card on a page lands on a non-empty page
-- [x] 2.7 Editing a card deleted elsewhere shows "no longer exists"
-- [x] 2.8 Unload guard prompts while a modified edit is open, not after save
-- [x] 2.9 NewFlashcardForm still works
+- [x] 2.2 Edit and save updates the card, source unchanged — 8259b52
+- [x] 2.3 Cancel and no-op save send no request — 8259b52
+- [x] 2.4 Invalid edit shows field errors without a request — 8259b52
+- [x] 2.5 Two-step delete: cancel keeps, confirm removes — 8259b52
+- [x] 2.6 Deleting the last card on a page lands on a non-empty page — 8259b52
+- [x] 2.7 Editing a card deleted elsewhere shows "no longer exists" — 8259b52
+- [x] 2.8 Unload guard prompts while a modified edit is open, not after save — 8259b52
+- [x] 2.9 NewFlashcardForm still works — 8259b52
 
 ### Phase 3: Release
 

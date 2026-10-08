@@ -75,7 +75,11 @@ if (!loadFailed && page > lastPage) {
             <ul class="space-y-3">
               {cards.map((card, index) => (
                 <li class="rounded-lg border border-white/10 bg-white/5 p-4">
-                  <DeckCard client:load card={card} position={from + index + 1} />
+                  <DeckCard
+                    client:load
+                    card={{ id: card.id, front: card.front, back: card.back }}
+                    position={from + index + 1}
+                  />
                 </li>
               ))}
             </ul>
