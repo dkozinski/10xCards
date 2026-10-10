@@ -106,6 +106,7 @@ The service maps `P0002` to `null`, and the route maps that to `not_found`.
   - `P0002` → `null` → `not_found`.
   - Any other SQLSTATE → `server_error`. This covers every `22023` above, plus `23502`, `22P02`, `22007` and `23514` from malformed `p_next`/`p_log` values.
   - The Worker builds every RPC argument itself and the route validates `day_end` before the call, so any of these errors is our bug, not user input.
+- **`day_end` is bounded after the save (impl review phase 2, F1).** `POST /api/reviews` checks the shape of every field before writing, but checks the `(now, now + 48h]` bound of `day_end` only after the grade is saved: `day_end` feeds only the next-card lookup and must not cost the grade. A stale `day_end` therefore answers `400 validation_failed` (`fieldErrors.day_end`) *after* a successful write. The island recomputes `day_end` and retries with the same `review_id`, which replays and returns the next card.
 - **Accepted widening:** `FlashcardDto` stays an alias over the generated row, so `POST /api/flashcards`, `PATCH /api/flashcards/[id]` and `listFlashcards` now also return the nine FSRS columns. That is the owner's own data. Islands keep receiving only `{id, front, back}` (`deck.astro:80`), so nothing new is serialized into the HTML.
 
 ---
@@ -350,7 +351,7 @@ Add the `/review` page and the `ReviewSession` island, plus navigation. Check ev
 **Contract**:
 
 - **States:** `loading → front → revealed → grading → front | batchDone | nothingDue | error`.
-- **`day_end`:** computed on mount as the next local midnight (`new Date(y, m, d + 1)`), recomputed when a fresh session starts.
+- **`day_end`:** computed from the current clock for every request as the next local midnight (`new Date(y, m, d + 1)`), so a session that runs past midnight keeps working. (Changed 2026-10-10 by impl review phase 2, F1; it was "computed on mount".)
 - **`review_id`:** `crypto.randomUUID()` minted when a card is displayed and kept across retries of that card.
 - **Requests:** inline `fetch` with `AbortSignal.timeout(30_000)`, as in `DeckCard`.
 - **Batch:** a set of distinct graded card ids. At 20, requests switch to `learning_only=true`. When that returns no card, show "Done — {due_count} more waiting", with "Continue" (resets the set) and "Finish" (link to `/deck`).
@@ -514,29 +515,29 @@ The migration goes to production first, because it is additive and safe for the 
 
 #### Automated
 
-- [x] 1.1 Migration applies to the local stack
-- [x] 1.2 pgTAP passes, including existing files
-- [x] 1.3 Types regenerate with no manual edits
-- [x] 1.4 Lint and unit tests still pass
+- [x] 1.1 Migration applies to the local stack — c399748
+- [x] 1.2 pgTAP passes, including existing files — c399748
+- [x] 1.3 Types regenerate with no manual edits — c399748
+- [x] 1.4 Lint and unit tests still pass — c399748
 
 #### Manual
 
-- [x] 1.5 Mutation check on `review_logs_insert_own` ownership clause
-- [x] 1.6 Migration reviewed by the owner
+- [x] 1.5 Mutation check on `review_logs_insert_own` ownership clause — c399748
+- [x] 1.6 Migration reviewed by the owner — c399748
 
 ### Phase 2: Scheduling and API
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass
-- [ ] 2.2 Lint passes
-- [ ] 2.3 Build passes with `ts-fsrs` bundled
-- [ ] 2.4 `srs.test.ts` covers the transition cases
-- [ ] 2.5 Route tests cover the error vocabulary and 200 shapes
+- [x] 2.1 Unit tests pass
+- [x] 2.2 Lint passes
+- [x] 2.3 Build passes with `ts-fsrs` bundled
+- [x] 2.4 `srs.test.ts` covers the transition cases
+- [x] 2.5 Route tests cover the error vocabulary and 200 shapes
 
 #### Manual
 
-- [ ] 2.6 Mutation check on scheduling and `not_found` branch
+- [x] 2.6 Mutation check on scheduling and `not_found` branch
 
 ### Phase 3: Review UI
 

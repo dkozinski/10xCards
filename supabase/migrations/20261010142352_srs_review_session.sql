@@ -64,6 +64,9 @@ create table public.review_logs (
 comment on table public.review_logs is
   'One row per grade, never card text. Owner-only via RLS; rows are immutable. Deleted with the card or the account.';
 
+comment on column public.review_logs.due is
+  'ts-fsrs ReviewLog.due: the time of the previous review (the card''s due only if it had never been reviewed). Kept verbatim so a future optimiser or rollback can read it as ts-fsrs does.';
+
 create index review_logs_user_id_idx on public.review_logs (user_id);
 create index review_logs_flashcard_id_idx on public.review_logs (flashcard_id);
 
