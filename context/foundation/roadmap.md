@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-08
+updated: 2026-10-10
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -51,7 +51,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | done        |
-| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | ready    |
+| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | in-progress |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
 
 ## Streams
@@ -155,7 +155,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Which off-the-shelf scheduling algorithm, and what per-card state does it require the deck to carry? — Owner: downstream decision at plan time. Block: no.
   - Resolves PRD Open Question 4 (edit versus grade history) as a side effect of the algorithm choice — Owner: downstream. Block: no.
 - **Risk:** The PRD makes two absolute promises about this slice — progress is never lost and a card belonging to someone else, or already deleted, is never shown — and the repository currently has no automated way to demonstrate either. That gap is the sharpest risk in the milestone, and it is why the deck's access rules are settled back in F-01 rather than here. This slice also extends the deck's shape with scheduling state, which is deliberate: that state is introduced at the moment something finally uses it, not earlier. A custom algorithm is explicitly a Non-Goal.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-06: Delete the account and everything in it
 

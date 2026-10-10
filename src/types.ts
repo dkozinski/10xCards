@@ -9,6 +9,10 @@ export type FlashcardDto = Tables<"flashcards">;
 // string; this union mirrors flashcards_source_check.
 export type FlashcardSource = "manual" | "ai" | "ai_edited";
 
+// flashcards.state is text + CHECK in the DB; this union mirrors
+// flashcards_state_check (the ts-fsrs State, spelled out)
+export type SrsState = "new" | "learning" | "review" | "relearning";
+
 // user_id is omitted on purpose: the column defaults to auth.uid(); source is
 // omitted too, so manual cards default to 'manual'
 export type CreateFlashcardCommand = Pick<TablesInsert<"flashcards">, "front" | "back">;
@@ -40,4 +44,26 @@ export interface SaveGenerationCommand {
 
 export interface SaveGenerationResponseDto {
   saved_count: number;
+}
+
+// One card of a review session: only what the screen shows. The FSRS state
+// stays on the server, which reads it fresh for every grade.
+export type ReviewCardDto = Pick<FlashcardDto, "id" | "front" | "back"> & { state: SrsState };
+
+// Response of GET /api/reviews/next and POST /api/reviews; card is null when
+// nothing is due. due_count counts what is due today, for "N more waiting".
+export interface NextReviewResponseDto {
+  card: ReviewCardDto | null;
+  due_count: number;
+}
+
+// A grade: Again, Hard, Good, Easy (ts-fsrs Rating 1-4; Manual is never sent).
+export type ReviewRating = 1 | 2 | 3 | 4;
+
+// review_id is minted by the client when a card is shown and reused on retry
+// (idempotency key)
+export interface RecordReviewCommand {
+  review_id: string;
+  flashcard_id: string;
+  rating: ReviewRating;
 }
