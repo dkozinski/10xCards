@@ -7,25 +7,52 @@ export type Database = {
         Row: {
           back: string;
           created_at: string;
+          difficulty: number;
+          due: string;
           front: string;
           id: string;
+          lapses: number;
+          last_review: string | null;
+          learning_steps: number;
+          reps: number;
+          scheduled_days: number;
           source: string;
+          stability: number;
+          state: string;
           user_id: string;
         };
         Insert: {
           back: string;
           created_at?: string;
+          difficulty?: number;
+          due?: string;
           front: string;
           id?: string;
+          lapses?: number;
+          last_review?: string | null;
+          learning_steps?: number;
+          reps?: number;
+          scheduled_days?: number;
           source?: string;
+          stability?: number;
+          state?: string;
           user_id?: string;
         };
         Update: {
           back?: string;
           created_at?: string;
+          difficulty?: number;
+          due?: string;
           front?: string;
           id?: string;
+          lapses?: number;
+          last_review?: string | null;
+          learning_steps?: number;
+          reps?: number;
+          scheduled_days?: number;
           source?: string;
+          stability?: number;
+          state?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -60,11 +87,79 @@ export type Database = {
         };
         Relationships: [];
       };
+      review_logs: {
+        Row: {
+          created_at: string;
+          difficulty: number;
+          due: string;
+          flashcard_id: string;
+          id: string;
+          learning_steps: number;
+          rating: number;
+          reviewed_at: string;
+          scheduled_days: number;
+          stability: number;
+          state: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          difficulty: number;
+          due: string;
+          flashcard_id: string;
+          id: string;
+          learning_steps: number;
+          rating: number;
+          reviewed_at: string;
+          scheduled_days: number;
+          stability: number;
+          state: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          difficulty?: number;
+          due?: string;
+          flashcard_id?: string;
+          id?: string;
+          learning_steps?: number;
+          rating?: number;
+          reviewed_at?: string;
+          scheduled_days?: number;
+          stability?: number;
+          state?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "review_logs_flashcard_id_fkey";
+            columns: ["flashcard_id"];
+            isOneToOne: false;
+            referencedRelation: "flashcards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      next_review_card: {
+        Args: { p_day_end: string; p_learning_only: boolean; p_now: string };
+        Returns: Json;
+      };
+      record_review: {
+        Args: {
+          p_flashcard_id: string;
+          p_log: Json;
+          p_next: Json;
+          p_rating: number;
+          p_review_id: string;
+          p_reviewed_at: string;
+        };
+        Returns: boolean;
+      };
       save_generation: {
         Args: {
           p_cards: Json;

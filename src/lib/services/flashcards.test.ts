@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "@/db/database.types";
-import { deleteFlashcard, listFlashcards, updateFlashcard } from "./flashcards";
+import { countFlashcards, deleteFlashcard, listFlashcards, updateFlashcard } from "./flashcards";
 
 interface Result {
   data?: unknown;
@@ -28,6 +28,30 @@ function stubClient(results: Result[]) {
   const client = { from: () => builder } as unknown as SupabaseClient<Database>;
   return { client, builder, calls };
 }
+
+describe("countFlashcards", () => {
+  it("asks for the count only, without rows", async () => {
+    const { client, builder } = stubClient([{ count: 7 }]);
+    await expect(countFlashcards(client)).resolves.toBe(7);
+    expect(builder.select).toHaveBeenCalledWith("*", { count: "exact", head: true });
+  });
+
+  it("returns zero for an empty deck", async () => {
+    const { client } = stubClient([{ count: 0 }]);
+    await expect(countFlashcards(client)).resolves.toBe(0);
+  });
+
+  it("refuses to report a missing count as an empty deck", async () => {
+    const { client } = stubClient([{ count: null }]);
+    await expect(countFlashcards(client)).rejects.toThrow("count missing");
+  });
+
+  it("throws the database error", async () => {
+    const error = { code: "42501" };
+    const { client } = stubClient([{ error }]);
+    await expect(countFlashcards(client)).rejects.toBe(error);
+  });
+});
 
 describe("listFlashcards", () => {
   it("returns the page and the total, newest first with an id tiebreak", async () => {
