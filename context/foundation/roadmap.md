@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-10
+updated: 2026-10-11
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -51,8 +51,8 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | done        |
-| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | in-progress |
-| S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | proposed |
+| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | done        |
+| S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | ready |
 
 ## Streams
 
@@ -155,7 +155,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Which off-the-shelf scheduling algorithm, and what per-card state does it require the deck to carry? — Owner: downstream decision at plan time. Block: no.
   - Resolves PRD Open Question 4 (edit versus grade history) as a side effect of the algorithm choice — Owner: downstream. Block: no.
 - **Risk:** The PRD makes two absolute promises about this slice — progress is never lost and a card belonging to someone else, or already deleted, is never shown — and the repository currently has no automated way to demonstrate either. That gap is the sharpest risk in the milestone, and it is why the deck's access rules are settled back in F-01 rather than here. This slice also extends the deck's shape with scheduling state, which is deliberate: that state is introduced at the moment something finally uses it, not earlier. A custom algorithm is explicitly a Non-Goal.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-06: Delete the account and everything in it
 
@@ -168,7 +168,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - How is an irreversible deletion confirmed to the user? (PRD Open Question 5) — Owner: downstream decision. Block: no.
 - **Risk:** FR-001 and FR-002 are listed above because this slice closes out the account lifecycle they open, **not** because registration or login get rebuilt — the `## Baseline` section records both as already working, and no slice in this milestone touches them. Sequenced last for a specific reason, not by neglect: FR-003 promises that *all* of the user's data goes, and review history only exists once S-05 has created it. Building deletion earlier would produce a promise that quietly stops being true the moment scheduling state is added. The PRD grounds this requirement in the user pasting employer material, so an incomplete deletion is a trust failure rather than a missing feature — which is also why it is a `must-have` despite sitting off the main learning path.
-- **Status:** proposed
+- **Status:** ready
 
 ## Backlog Handoff
 
@@ -180,7 +180,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-03       | #10   | `review-and-save-proposals`| Reject, edit, and save AI proposals into the deck             | yes                   | Q-2/Q-3 resolved 2026-10-05 (#2, #3 closed) |
 | S-04       | #11   | `edit-and-delete-cards`    | Edit and delete cards already saved in the deck               | yes                   | Done 2026-10-08 (PR #28) |
 | S-05       | #12   | `srs-review-session`       | Run a scheduled review session over the deck                  | yes                   | S-01 done 2026-09-28; picks the scheduling algorithm |
-| S-06       | #13   | `account-and-data-deletion`| Delete the account and all of its data                        | no                    | Waits on S-01 and S-05 |
+| S-06       | #13   | `account-and-data-deletion`| Delete the account and all of its data                        | yes                   | S-01 done 2026-09-28, S-05 done 2026-10-11 |
 
 This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It should be compact enough to copy into issues, but it must not duplicate the detailed roadmap body.
 
@@ -191,7 +191,7 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 1. **Is there an upper character limit on pasted text submitted for generation, and what happens above it?** — Owner: user (PRD Open Question 1). Block: S-02, non-blocking — a default can be chosen at plan time.
 2. **Is the fact of a rejection recorded in aggregate, so the "75% accepted without modification" criterion can be computed at all?** — Owner: user (PRD Open Question 2). Block: S-03, blocking. **Resolved 2026-10-05 (#2):** yes, per-generation counts in a `generations` table.
 3. **Does an edited-then-saved proposal still count toward "75% of the deck created with AI", and where is the threshold between AI-assisted and manual?** — Owner: user (PRD Open Question 3). Block: S-03, blocking. **Resolved 2026-10-05 (#3):** yes, as `ai_edited`; any edit before save crosses the line.
-4. **When a saved flashcard is edited, is its grade history preserved or reset?** — Owner: downstream, tied to the algorithm chosen in S-05 (PRD Open Question 4). Block: S-04 and S-05, non-blocking.
+4. **When a saved flashcard is edited, is its grade history preserved or reset?** — Owner: downstream, tied to the algorithm chosen in S-05 (PRD Open Question 4). Block: S-04 and S-05, non-blocking. **Resolved 2026-10-11 (#4):** keep — an edit writes only `front`/`back`; the FSRS schedule and `review_logs` stay.
 5. **How is the irreversible account deletion confirmed to the user?** — Owner: downstream (PRD Open Question 5). Block: S-06, non-blocking.
 6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap.
 
@@ -219,3 +219,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 - **S-02: The user can paste source text, ask for flashcards, watch visible progress while the request runs, and see the drafted proposals on screen.** — Archived 2026-10-01 → `context/archive/2026-09-29-ai-proposals-from-text/`. Lesson: —.
 - **S-03: The user can scan the proposals, reject the bad ones, edit the almost-good ones, and save the rest into their deck in one deliberate action.** — Archived 2026-10-07 → `context/archive/2026-10-05-review-and-save-proposals/`. Lesson: —.
 - **S-04: The user can correct the wording of a card already in their deck, or remove it for good.** — Archived 2026-10-08 → `context/archive/2026-10-07-edit-and-delete-cards/`. Lesson: —.
+- **S-05: The user can start a session on their deck, grade each card, and have both the schedule and the progress remembered — including after logging out or switching machines.** — Archived 2026-10-11 → `context/archive/2026-10-10-srs-review-session/`. Lesson: —.

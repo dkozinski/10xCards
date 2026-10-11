@@ -106,7 +106,7 @@ The service maps `P0002` to `null`, and the route maps that to `not_found`.
   - `P0002` → `null` → `not_found`.
   - Any other SQLSTATE → `server_error`. This covers every `22023` above, plus `23502`, `22P02`, `22007` and `23514` from malformed `p_next`/`p_log` values.
   - The Worker builds every RPC argument itself and the route validates `day_end` before the call, so any of these errors is our bug, not user input.
-- **`day_end` is bounded after the save (impl review phase 2, F1).** `POST /api/reviews` checks the shape of every field before writing, but checks the `(now, now + 48h]` bound of `day_end` only after the grade is saved: `day_end` feeds only the next-card lookup and must not cost the grade. A stale `day_end` therefore answers `400 validation_failed` (`fieldErrors.day_end`) *after* a successful write. The island recomputes `day_end` and retries with the same `review_id`, which replays and returns the next card.
+- **`day_end` is bounded after the save (impl review phase 2, F1).** `POST /api/reviews` checks the shape of every field before writing, but checks the `(now, now + 48h]` bound of `day_end` only after the grade is saved: `day_end` feeds only the next-card lookup and must not cost the grade. A stale `day_end` therefore answers `400 validation_failed` (`fieldErrors.day_end`) *after* a successful write. The island recomputes `day_end` on every attempt. The user then presses Retry, which sends the same `review_id`; the server replays the saved grade and returns the next card.
 - **Accepted widening:** `FlashcardDto` stays an alias over the generated row, so `POST /api/flashcards`, `PATCH /api/flashcards/[id]` and `listFlashcards` now also return the nine FSRS columns. That is the owner's own data. Islands keep receiving only `{id, front, back}` (`deck.astro:80`), so nothing new is serialized into the HTML.
 
 ---
@@ -371,6 +371,7 @@ Add the `/review` page and the `ReviewSession` island, plus navigation. Check ev
   - Any other code → "Something went wrong on our side".
   - The live region repeats the same text.
 - **A 2xx is trusted only in the expected shape** (`isNextReviewResponse`, F2). Any other body leads to Retry.
+- **Batch end** (full impl review, F2). After the 20th distinct card, cards still in learning keep coming: tier 4 serves them up to 20 minutes ahead. "Done" appears only once they graduate.
 - **Announcements** read "Card N: {front}", so a card that comes back is announced again. The `not_found` notice is spoken together with the next card. On the end screens, focus moves to Continue or to the end message (F3).
 - **Beyond the contract:**
   - `src/lib/review-session.ts` (`nextLocalMidnight`, `isNextReviewResponse`, `REVIEW_BATCH_SIZE`) and `countFlashcards`, both unit-tested.
@@ -577,14 +578,14 @@ The migration goes to production first, because it is additive and safe for the 
 
 #### Automated
 
-- [x] 4.1 Dry run lists exactly one migration
-- [x] 4.2 Schema parity after push
-- [x] 4.3 CI green on the PR
-- [ ] 4.4 Workers Builds green on the merge commit
+- [x] 4.1 Dry run lists exactly one migration — ab1fa28
+- [x] 4.2 Schema parity after push — ab1fa28
+- [x] 4.3 CI green on the PR — ab1fa28
+- [x] 4.4 Workers Builds green on the merge commit — 10897d1
 
 #### Manual
 
-- [x] 4.5 Owner go-ahead before `db push`
-- [x] 4.6 `db dump --linked` grants match pgTAP
-- [x] 4.7 Preview session works without `[unenv]` errors
-- [ ] 4.8 Production smoke check incl. cross-browser persistence
+- [x] 4.5 Owner go-ahead before `db push` — ab1fa28
+- [x] 4.6 `db dump --linked` grants match pgTAP — ab1fa28
+- [x] 4.7 Preview session works without `[unenv]` errors — ab1fa28
+- [x] 4.8 Production smoke check incl. cross-browser persistence — 10897d1

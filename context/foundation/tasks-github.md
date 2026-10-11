@@ -13,8 +13,8 @@
 
 | Construct | State |
 | --- | --- |
-| Milestone `M-1: Paste-to-review loop` (#1) | open — 6 open / 7 closed |
-| Issues #1–#13 | closed: #7 (F-01, 2026-09-23), #9 (S-01, 2026-09-28), #8 (S-02, 2026-10-01), #2 + #3 (Q-2/Q-3 answered 2026-10-05), #10 (S-03, 2026-10-07), #11 (S-04, 2026-10-08); rest open |
+| Milestone `M-1: Paste-to-review loop` (#1) | open — 4 open / 9 closed |
+| Issues #1–#13 | closed: #7 (F-01, 2026-09-23), #9 (S-01, 2026-09-28), #8 (S-02, 2026-10-01), #2 + #3 (Q-2/Q-3 answered 2026-10-05), #10 (S-03, 2026-10-07), #11 (S-04, 2026-10-08), #12 + #4 (S-05 and Q-4 answered, 2026-10-11); rest open |
 | 9 custom labels | created |
 | 9 native "blocked by" dependencies | created |
 | Projects board "10xCards Roadmap" | **not created yet** — token now has `project` scope; step pending |
@@ -43,15 +43,15 @@
 | #9 | S-01 | `manual-card-and-deck` | `type:slice` `stream:A-deck` — **closed** | #7 (closed) |
 | #10 | S-03 | `review-and-save-proposals` | `type:slice` `stream:B-ai` `north-star` — **closed** | #9, #8, #2, #3 (all closed) |
 | #11 | S-04 | `edit-and-delete-cards` | `type:slice` `stream:A-deck` — **closed** | #9 (closed) |
-| #12 | S-05 | `srs-review-session` | `type:slice` `status:ready` `stream:C-review` | #9 (closed) |
-| #13 | S-06 | `account-and-data-deletion` | `type:slice` `status:proposed` `stream:C-review` | #9 (closed), #12 |
+| #12 | S-05 | `srs-review-session` | `type:slice` `stream:C-review` — **closed** | #9 (closed) |
+| #13 | S-06 | `account-and-data-deletion` | `type:slice` `status:ready` `stream:C-review` | #9, #12 (both closed) |
 
 | Issue | Question | Blocks | Blocking? |
 | --- | --- | --- | --- |
 | #1 | Q-1 Character limit on pasted text | S-02 (#8) | no — body link only |
 | #2 | Q-2 Are rejections recorded in aggregate? — **closed** (yes: `generations` counts) | S-03 (#10) | **yes** — native dependency |
 | #3 | Q-3 Does an edited proposal count as AI-created? — **closed** (yes: `source` = `ai_edited`) | S-03 (#10) | **yes** — native dependency |
-| #4 | Q-4 Grade history on edit: keep or reset? | S-04, S-05 | no — body link only |
+| #4 | Q-4 Grade history on edit: keep or reset? — **closed** (keep: edit writes only `front`/`back`) | S-04, S-05 | no — body link only |
 | #5 | Q-5 How is account deletion confirmed? | S-06 (#13) | no — body link only |
 | #6 | Q-6 Automated checks for the two guardrails? | roadmap-wide | no |
 
@@ -75,9 +75,9 @@ graph LR
 ```
 
 > [!TIP]
-> **Where to start:** #12 (S-05) is the only slice with no open blockers, labelled `status:ready`.
-> F-01, S-01, S-02, the north star S-03 (#10) and S-04 (#11) are closed. #13 (S-06) stays
-> `status:proposed` until #12 closes.
+> **Where to start:** #13 (S-06) is the last open slice of M-1, labelled `status:ready`.
+> Every other foundation and slice (F-01, S-01 to S-05) is closed. Its only unknown, #5 (Q-5), is
+> non-blocking.
 
 ## Label vocabulary
 
@@ -151,6 +151,13 @@ comments copied). The mirrors were not synced after S-02, so #8 / DAW-12 were ca
 commit does not touch the trackers, so the follow-up is by hand: tick #11's "Done when" boxes, drop
 `status:ready`, and mirror in Linear (DAW-15 → `Done`, `ready` removed). Nothing became unblocked: #12 was
 already `status:ready`, and #13 still waits on it.
+
+**Example (S-05, done 2026-10-11):** PR #31 carried `Closes #12` and `Closes #4`, so both closed on merge.
+`Closes` on a **question** closes it with its **Decision** still "Not yet decided". The answer was written
+by hand afterwards, into the body and as a comment, then mirrored to DAW-8. #12: tick "Done when" (the
+archive box waits for `/10x-archive`) and drop `status:ready`. #13 lost its last blocker:
+`status:proposed` → `status:ready`, "Ready for `/10x-plan`" → yes. Linear: DAW-16 and DAW-8 → `Done`;
+DAW-17 → `Todo` + `ready`. Roadmap and PRD: Q-4 marked resolved, S-06 `Status: ready`.
 
 ## `gh` cheatsheet
 

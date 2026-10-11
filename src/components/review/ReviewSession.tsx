@@ -176,7 +176,8 @@ export default function ReviewSession() {
       return;
     }
     if (outcome.code === "not_found") {
-      // deleted in another tab, or never ours: skip it, nothing was saved
+      // deleted in another tab (a grade saved before a failed lookup went
+      // with it, by cascade) or never ours: skip it
       setNotice("This card no longer exists. Moving on to the next one.");
       await loadNext("This card no longer exists. ");
       return;

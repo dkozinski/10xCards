@@ -580,8 +580,11 @@ select throws_ok(
 
 reset role;
 
+-- postgres sees every row, so the count is limited to this file's users:
+-- a local stack with other data must not fail it
 select is(
-  (select count(*)::int from public.review_logs),
+  (select count(*)::int from public.review_logs
+    where user_id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b')),
   1,
   'refused calls by B and anon wrote no log rows'
 );

@@ -30,11 +30,11 @@
 
 **Workflow status** (Linear-only; GitHub has just open/closed):
 
-- `Todo` — `readiness/ready` items (S-05)
+- `Todo` — `readiness/ready` items (S-06)
 - `Backlog` — everything else
 - `Done` — equivalent of a closed GitHub issue (F-01 since 2026-09-23, S-01 since 2026-09-28, S-02 since
-  2026-10-01, Q-2 and Q-3 since 2026-10-07, S-03 since 2026-10-07, S-04 since 2026-10-08; their
-  `readiness` labels are removed)
+  2026-10-01, Q-2 and Q-3 since 2026-10-07, S-03 since 2026-10-07, S-04 since 2026-10-08, S-05 and Q-4 since
+  2026-10-11; their `readiness` labels are removed)
 
 ## Issue inventory
 
@@ -43,7 +43,7 @@
 | DAW-5 | #1 | Q-1 | `question` | — |
 | DAW-6 | #2 | Q-2 | `question` — **Done** | — |
 | DAW-7 | #3 | Q-3 | `question` — **Done** | — |
-| DAW-8 | #4 | Q-4 | `question` | — |
+| DAW-8 | #4 | Q-4 | `question` — **Done** | — |
 | DAW-9 | #5 | Q-5 | `question` | — |
 | DAW-10 | #6 | Q-6 | `question` | — |
 | DAW-11 | #7 | F-01 | `foundation` `A-deck` — **Done** | — |
@@ -51,8 +51,8 @@
 | DAW-13 | #9 | S-01 | `slice` `A-deck` — **Done** | DAW-11 (Done) |
 | DAW-14 | #10 | S-03 | `slice` `B-ai` `north-star` — **Done** | DAW-13, DAW-12, DAW-6, DAW-7 (all Done) |
 | DAW-15 | #11 | S-04 | `slice` `A-deck` — **Done** | DAW-13 (Done) |
-| DAW-16 | #12 | S-05 | `slice` `ready` `C-review` | DAW-13 (Done) |
-| DAW-17 | #13 | S-06 | `slice` `proposed` `C-review` | DAW-13 (Done), DAW-16 |
+| DAW-16 | #12 | S-05 | `slice` `C-review` — **Done** | DAW-13 (Done) |
+| DAW-17 | #13 | S-06 | `slice` `ready` `C-review` | DAW-13, DAW-16 (both Done) |
 
 Every Linear issue carries a link attachment back to its GitHub issue.
 
