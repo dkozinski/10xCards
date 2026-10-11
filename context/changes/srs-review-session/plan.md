@@ -557,34 +557,34 @@ The migration goes to production first, because it is additive and safe for the 
 
 #### Automated
 
-- [x] 3.1 Lint, tests and build pass
-- [x] 3.2 `npm run preview` serves `/review` without `[unenv]` errors
+- [x] 3.1 Lint, tests and build pass — cc9c842
+- [x] 3.2 `npm run preview` serves `/review` without `[unenv]` errors — cc9c842
 
 #### Manual
 
-- [x] 3.3 Reload mid-session keeps progress
-- [x] 3.4 Again requeues in the same session (learn ahead)
-- [x] 3.5 Card deleted in another tab is never shown / handled as not_found
-- [x] 3.6 Retry after outage writes exactly one log row
-- [x] 3.7 Batch of 20 with Continue
-- [x] 3.8 Empty-deck and nothing-due states
-- [x] 3.9 Second account sees nothing of the first
-- [x] 3.10 Edit keeps schedule and log
-- [x] 3.11 Keyboard and screen-reader run
-- [x] 3.12 `.dev.vars` restored and sha matches
+- [x] 3.3 Reload mid-session keeps progress — cc9c842
+- [x] 3.4 Again requeues in the same session (learn ahead) — cc9c842
+- [x] 3.5 Card deleted in another tab is never shown / handled as not_found — cc9c842
+- [x] 3.6 Retry after outage writes exactly one log row — cc9c842
+- [x] 3.7 Batch of 20 with Continue — cc9c842
+- [x] 3.8 Empty-deck and nothing-due states — cc9c842
+- [x] 3.9 Second account sees nothing of the first — cc9c842
+- [x] 3.10 Edit keeps schedule and log — cc9c842
+- [x] 3.11 Keyboard and screen-reader run — cc9c842
+- [x] 3.12 `.dev.vars` restored and sha matches — cc9c842
 
 ### Phase 4: Release
 
 #### Automated
 
-- [ ] 4.1 Dry run lists exactly one migration
-- [ ] 4.2 Schema parity after push
-- [ ] 4.3 CI green on the PR
+- [x] 4.1 Dry run lists exactly one migration
+- [x] 4.2 Schema parity after push
+- [x] 4.3 CI green on the PR
 - [ ] 4.4 Workers Builds green on the merge commit
 
 #### Manual
 
-- [ ] 4.5 Owner go-ahead before `db push`
-- [ ] 4.6 `db dump --linked` grants match pgTAP
-- [ ] 4.7 Preview session works without `[unenv]` errors
+- [x] 4.5 Owner go-ahead before `db push`
+- [x] 4.6 `db dump --linked` grants match pgTAP
+- [x] 4.7 Preview session works without `[unenv]` errors
 - [ ] 4.8 Production smoke check incl. cross-browser persistence
