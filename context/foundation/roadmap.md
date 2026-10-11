@@ -52,7 +52,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | done        |
 | S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | done        |
-| S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | ready |
+| S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | in-progress |
 
 ## Streams
 
@@ -168,7 +168,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - How is an irreversible deletion confirmed to the user? (PRD Open Question 5) — Owner: downstream decision. Block: no.
 - **Risk:** FR-001 and FR-002 are listed above because this slice closes out the account lifecycle they open, **not** because registration or login get rebuilt — the `## Baseline` section records both as already working, and no slice in this milestone touches them. Sequenced last for a specific reason, not by neglect: FR-003 promises that *all* of the user's data goes, and review history only exists once S-05 has created it. Building deletion earlier would produce a promise that quietly stops being true the moment scheduling state is added. The PRD grounds this requirement in the user pasting employer material, so an incomplete deletion is a trust failure rather than a missing feature — which is also why it is a `must-have` despite sitting off the main learning path.
-- **Status:** ready
+- **Status:** in-progress
 
 ## Backlog Handoff
 
