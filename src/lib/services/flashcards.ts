@@ -12,6 +12,15 @@ type Client = SupabaseClient<Database>;
 // PostgREST answers an offset past the last row with 416 and no count.
 const RANGE_NOT_SATISFIABLE = "PGRST103";
 
+// The deck size alone, without rows: /review tells an empty deck apart from a
+// day with nothing due.
+export async function countFlashcards(supabase: Client): Promise<number> {
+  const { count, error } = await supabase.from("flashcards").select("*", { count: "exact", head: true });
+  if (error) throw error;
+  // a missing count must not read as an empty deck
+  return requireCount(count);
+}
+
 export async function createFlashcard(supabase: Client, cmd: CreateFlashcardCommand): Promise<FlashcardDto> {
   const { data, error } = await supabase
     .from("flashcards")

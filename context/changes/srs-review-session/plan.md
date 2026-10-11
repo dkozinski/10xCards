@@ -363,6 +363,20 @@ Add the `/review` page and the `ReviewSession` island, plus navigation. Check ev
 - **Empty queue:** a `nothingDue` card ("Nothing to review today — come back tomorrow").
 - **Accessibility:** an `sr-only aria-live="polite"` region announces the new card and the save result. Focus moves to "Show answer" on each new card, and to "Good" after reveal.
 
+**Addendum 2026-10-11 (impl review, Phase 3) — what the island actually does:**
+- **No `error` phase.** A retryable failure is a `failed` overlay on the current phase: the card stays on screen with `ServerError` and Retry. `unauthorized` is a terminal `expired` phase.
+- **Messages follow the cause** (F1):
+  - `validation_failed` → "Your device clock looks wrong". The island builds every field itself, so this can only be `day_end` out of the server's window. The retry is manual: with a skewed clock an automatic one would loop.
+  - No API code (offline, timeout, proxy page) → "Check your connection".
+  - Any other code → "Something went wrong on our side".
+  - The live region repeats the same text.
+- **A 2xx is trusted only in the expected shape** (`isNextReviewResponse`, F2). Any other body leads to Retry.
+- **Announcements** read "Card N: {front}", so a card that comes back is announced again. The `not_found` notice is spoken together with the next card. On the end screens, focus moves to Continue or to the end message (F3).
+- **Beyond the contract:**
+  - `src/lib/review-session.ts` (`nextLocalMidnight`, `isNextReviewResponse`, `REVIEW_BATCH_SIZE`) and `countFlashcards`, both unit-tested.
+  - A "{N} due today" line. It shows `due_count`, which leaves out learning cards that are not yet due; the owner accepted this on 2026-10-10.
+  - Continue is hidden when `due_count` is 0.
+
 #### 3. Navigation and protection
 
 **Files**: `src/middleware.ts`, `src/components/Topbar.astro`, `src/pages/dashboard.astro`
@@ -394,7 +408,7 @@ Add the `/review` page and the `ReviewSession` island, plus navigation. Check ev
 - An empty deck shows the empty-deck state; a deck with nothing due shows "Nothing to review today"
 - Second account: sees none of the first account's cards in `/review`
 - Edit a reviewed card's text on `/deck` → its `due`, `state` and log rows are unchanged
-- Keyboard-only run: Tab and Enter work through reveal and grade; the screen reader announces the new card
+- Keyboard-only run: Tab and Enter work through reveal and grade; the screen reader announces the new card (2026-10-10: keyboard verified by the owner over 20+ cards; screen reader not tested, by the owner's decision. The `aria-live` region exists in code but no announcement was heard.)
 - `.dev.vars` restored, and its sha matches the backup
 
 **Implementation Note**: After automated verification passes, pause for the owner's manual confirmation before Phase 4.
@@ -529,35 +543,35 @@ The migration goes to production first, because it is additive and safe for the 
 
 #### Automated
 
-- [x] 2.1 Unit tests pass
-- [x] 2.2 Lint passes
-- [x] 2.3 Build passes with `ts-fsrs` bundled
-- [x] 2.4 `srs.test.ts` covers the transition cases
-- [x] 2.5 Route tests cover the error vocabulary and 200 shapes
+- [x] 2.1 Unit tests pass — e92bada
+- [x] 2.2 Lint passes — e92bada
+- [x] 2.3 Build passes with `ts-fsrs` bundled — e92bada
+- [x] 2.4 `srs.test.ts` covers the transition cases — e92bada
+- [x] 2.5 Route tests cover the error vocabulary and 200 shapes — e92bada
 
 #### Manual
 
-- [x] 2.6 Mutation check on scheduling and `not_found` branch
+- [x] 2.6 Mutation check on scheduling and `not_found` branch — e92bada
 
 ### Phase 3: Review UI
 
 #### Automated
 
-- [ ] 3.1 Lint, tests and build pass
-- [ ] 3.2 `npm run preview` serves `/review` without `[unenv]` errors
+- [x] 3.1 Lint, tests and build pass
+- [x] 3.2 `npm run preview` serves `/review` without `[unenv]` errors
 
 #### Manual
 
-- [ ] 3.3 Reload mid-session keeps progress
-- [ ] 3.4 Again requeues in the same session (learn ahead)
-- [ ] 3.5 Card deleted in another tab is never shown / handled as not_found
-- [ ] 3.6 Retry after outage writes exactly one log row
-- [ ] 3.7 Batch of 20 with Continue
-- [ ] 3.8 Empty-deck and nothing-due states
-- [ ] 3.9 Second account sees nothing of the first
-- [ ] 3.10 Edit keeps schedule and log
-- [ ] 3.11 Keyboard and screen-reader run
-- [ ] 3.12 `.dev.vars` restored and sha matches
+- [x] 3.3 Reload mid-session keeps progress
+- [x] 3.4 Again requeues in the same session (learn ahead)
+- [x] 3.5 Card deleted in another tab is never shown / handled as not_found
+- [x] 3.6 Retry after outage writes exactly one log row
+- [x] 3.7 Batch of 20 with Continue
+- [x] 3.8 Empty-deck and nothing-due states
+- [x] 3.9 Second account sees nothing of the first
+- [x] 3.10 Edit keeps schedule and log
+- [x] 3.11 Keyboard and screen-reader run
+- [x] 3.12 `.dev.vars` restored and sha matches
 
 ### Phase 4: Release
 
