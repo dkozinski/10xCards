@@ -167,7 +167,7 @@ Add the route that checks intent, calls the primitive and tears down the session
 
 #### 1. Email comparison helper
 
-**File**: `src/lib/account.ts` (new) and `src/lib/account.test.ts` (new)
+**File**: `src/lib/validation/account.ts` (new) and `src/lib/validation/account.test.ts` (new). It was first planned as `src/lib/account.ts` and moved by impl review phase 2, F2, because island-shared request schemas live in `src/lib/validation/`. The zod body schema `deleteAccountSchema` lives here too.
 
 **Intent**: Define a single matching rule shared by the island (button enablement) and the route (authoritative check).
 
@@ -312,7 +312,7 @@ Run on the **local** stack. `.dev.vars` points at production, so back it up, swa
 
 - `/account` is reachable from `Topbar` and redirects when signed out
 - The button stays disabled until the email matches; `" USER@x.test "` matches `user@x.test`
-- User A with cards, a generation and a graded review deletes the account → lands on `/?deleted=1` with the notice, signed out; `/deck` redirects to sign-in; signing in with A's credentials fails
+- User A with cards, a generation and a graded review deletes the account → lands on `/?deleted=1` with the notice, signed out (DevTools: the `DELETE /api/account` 204 carries expiring `sb-*` Set-Cookie headers; impl review phase 2, F4); `/deck` redirects to sign-in; signing in with A's credentials fails
 - In Studio, as `postgres`: 0 rows for A in all four tables; user B's data is intact and B can still sign in and review
 - Keyboard-only run: focus order, button state and announcements via the live region
 - Error path: force a `server_error` in Studio, as `postgres`, with `revoke execute on function public.delete_my_account() from authenticated`. Stopping the DB would also stop Auth and yield 401 instead. The button shows the "not deleted, try again" message, the account survives, and the button can be pressed again. Restore with `grant execute … to authenticated` and re-run `npx supabase test db`
@@ -446,27 +446,27 @@ None material. The cascade deletes one user's rows in one statement. At MVP deck
 
 #### Automated
 
-- [x] 1.1 Migration applies to the local stack
-- [x] 1.2 pgTAP passes, including existing files
-- [x] 1.3 Types regenerate with no manual edits
-- [x] 1.4 Lint and unit tests still pass
+- [x] 1.1 Migration applies to the local stack — 10e4128
+- [x] 1.2 pgTAP passes, including existing files — 10e4128
+- [x] 1.3 Types regenerate with no manual edits — 10e4128
+- [x] 1.4 Lint and unit tests still pass — 10e4128
 
 #### Manual
 
-- [x] 1.5 Mutation check on anon revoke / definer flag
-- [x] 1.6 Migration reviewed by the owner
+- [x] 1.5 Mutation check on anon revoke / definer flag — 10e4128
+- [x] 1.6 Migration reviewed by the owner — 10e4128
 
 ### Phase 2: Account deletion API
 
 #### Automated
 
-- [ ] 2.1 Unit and route tests pass
-- [ ] 2.2 Lint passes
-- [ ] 2.3 Build passes
+- [x] 2.1 Unit and route tests pass
+- [x] 2.2 Lint passes
+- [x] 2.3 Build passes
 
 #### Manual
 
-- [ ] 2.4 Mutation check on the emailsMatch guard
+- [x] 2.4 Mutation check on the emailsMatch guard
 
 ### Phase 3: Account page and UI
 
