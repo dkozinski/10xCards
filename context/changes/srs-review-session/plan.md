@@ -577,14 +577,14 @@ The migration goes to production first, because it is additive and safe for the 
 
 #### Automated
 
-- [x] 4.1 Dry run lists exactly one migration
-- [x] 4.2 Schema parity after push
-- [x] 4.3 CI green on the PR
-- [ ] 4.4 Workers Builds green on the merge commit
+- [x] 4.1 Dry run lists exactly one migration — ab1fa28
+- [x] 4.2 Schema parity after push — ab1fa28
+- [x] 4.3 CI green on the PR — ab1fa28
+- [x] 4.4 Workers Builds green on the merge commit — 10897d1
 
 #### Manual
 
-- [x] 4.5 Owner go-ahead before `db push`
-- [x] 4.6 `db dump --linked` grants match pgTAP
-- [x] 4.7 Preview session works without `[unenv]` errors
-- [ ] 4.8 Production smoke check incl. cross-browser persistence
+- [x] 4.5 Owner go-ahead before `db push` — ab1fa28
+- [x] 4.6 `db dump --linked` grants match pgTAP — ab1fa28
+- [x] 4.7 Preview session works without `[unenv]` errors — ab1fa28
+- [x] 4.8 Production smoke check incl. cross-browser persistence — 10897d1
