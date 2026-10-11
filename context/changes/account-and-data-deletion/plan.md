@@ -491,13 +491,13 @@ None material. The cascade deletes one user's rows in one statement. At MVP deck
 
 - [x] 4.1 Dry run lists exactly one migration
 - [x] 4.2 Schema parity after push
-- [ ] 4.3 CI green on the PR
-- [ ] 4.4 Workers Builds green on the merge commit
+- [x] 4.3 CI green on the PR
+- [x] 4.4 Workers Builds green on the merge commit
 
 #### Manual
 
 - [x] 4.5 Production `auth.users` DELETE grant confirmed before push
 - [x] 4.6 Owner go-ahead before `db push`
-- [ ] 4.7 Q-5 decision recorded before merge
-- [ ] 4.8 Preview deletion works, no personal data in logs
-- [ ] 4.9 Production proof: zero rows, sign-in fails
+- [x] 4.7 Q-5 decision recorded before merge
+- [x] 4.8 Preview deletion works, no personal data in logs
+- [x] 4.9 Production proof: zero rows, sign-in fails
