@@ -145,6 +145,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      delete_my_account: { Args: never; Returns: boolean };
       next_review_card: {
         Args: { p_day_end: string; p_learning_only: boolean; p_now: string };
         Returns: Json;
