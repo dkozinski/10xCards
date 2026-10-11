@@ -51,7 +51,7 @@ The product wedge — the one trait that, if removed, makes this indistinguishab
 | S-02  | ai-proposals-from-text     | paste text and see AI-drafted flashcard proposals on screen       | —             | US-01, FR-004, NFR responsiveness, NFR no source-text persistence     | done        |
 | S-03  | review-and-save-proposals  | reject and edit proposals, then save the rest into their deck     | S-01, S-02    | US-01, FR-005, FR-006, FR-007, NFR consent before save                | done |
 | S-04  | edit-and-delete-cards      | edit and delete a card already saved in their deck                | S-01          | FR-010, FR-011                                                        | done        |
-| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | in-progress |
+| S-05  | srs-review-session         | run a review session that schedules and remembers their progress  | S-01          | US-02, FR-012, NFR session reliability, NFR durability                | done        |
 | S-06  | account-and-data-deletion  | delete their account together with every trace of their data      | S-01, S-05    | FR-003, FR-001, FR-002                                                | ready |
 
 ## Streams
@@ -155,7 +155,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Which off-the-shelf scheduling algorithm, and what per-card state does it require the deck to carry? — Owner: downstream decision at plan time. Block: no.
   - Resolves PRD Open Question 4 (edit versus grade history) as a side effect of the algorithm choice — Owner: downstream. Block: no.
 - **Risk:** The PRD makes two absolute promises about this slice — progress is never lost and a card belonging to someone else, or already deleted, is never shown — and the repository currently has no automated way to demonstrate either. That gap is the sharpest risk in the milestone, and it is why the deck's access rules are settled back in F-01 rather than here. This slice also extends the deck's shape with scheduling state, which is deliberate: that state is introduced at the moment something finally uses it, not earlier. A custom algorithm is explicitly a Non-Goal.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-06: Delete the account and everything in it
 
@@ -219,3 +219,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 - **S-02: The user can paste source text, ask for flashcards, watch visible progress while the request runs, and see the drafted proposals on screen.** — Archived 2026-10-01 → `context/archive/2026-09-29-ai-proposals-from-text/`. Lesson: —.
 - **S-03: The user can scan the proposals, reject the bad ones, edit the almost-good ones, and save the rest into their deck in one deliberate action.** — Archived 2026-10-07 → `context/archive/2026-10-05-review-and-save-proposals/`. Lesson: —.
 - **S-04: The user can correct the wording of a card already in their deck, or remove it for good.** — Archived 2026-10-08 → `context/archive/2026-10-07-edit-and-delete-cards/`. Lesson: —.
+- **S-05: The user can start a session on their deck, grade each card, and have both the schedule and the progress remembered — including after logging out or switching machines.** — Archived 2026-10-11 → `context/archive/2026-10-10-srs-review-session/`. Lesson: —.
