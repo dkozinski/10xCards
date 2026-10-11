@@ -472,32 +472,32 @@ None material. The cascade deletes one user's rows in one statement. At MVP deck
 
 #### Automated
 
-- [x] 3.1 Lint, tests and build pass
-- [x] 3.2 `npm run preview` serves `/account` without `[unenv]` errors
+- [x] 3.1 Lint, tests and build pass — 72629ae
+- [x] 3.2 `npm run preview` serves `/account` without `[unenv]` errors — 72629ae
 
 #### Manual
 
-- [x] 3.3 `/account` reachable from Topbar and protected
-- [x] 3.4 Button enabled only on matching email (trim, case-insensitive)
-- [x] 3.5 Deleting A lands on `/?deleted=1`, signed out, old credentials fail
-- [x] 3.6 Zero rows for A in all four tables; B intact
-- [x] 3.7 Keyboard and screen-reader run
-- [x] 3.8 Error path keeps the account and allows retry
-- [x] 3.9 `.dev.vars` restored and sha matches
+- [x] 3.3 `/account` reachable from Topbar and protected — 72629ae
+- [x] 3.4 Button enabled only on matching email (trim, case-insensitive) — 72629ae
+- [x] 3.5 Deleting A lands on `/?deleted=1`, signed out, old credentials fail — 72629ae
+- [x] 3.6 Zero rows for A in all four tables; B intact — 72629ae
+- [x] 3.7 Keyboard and screen-reader run — 72629ae
+- [x] 3.8 Error path keeps the account and allows retry — 72629ae
+- [x] 3.9 `.dev.vars` restored and sha matches — 72629ae
 
 ### Phase 4: Release
 
 #### Automated
 
-- [ ] 4.1 Dry run lists exactly one migration
-- [ ] 4.2 Schema parity after push
+- [x] 4.1 Dry run lists exactly one migration
+- [x] 4.2 Schema parity after push
 - [ ] 4.3 CI green on the PR
 - [ ] 4.4 Workers Builds green on the merge commit
 
 #### Manual
 
-- [ ] 4.5 Production `auth.users` DELETE grant confirmed before push
-- [ ] 4.6 Owner go-ahead before `db push`
+- [x] 4.5 Production `auth.users` DELETE grant confirmed before push
+- [x] 4.6 Owner go-ahead before `db push`
 - [ ] 4.7 Q-5 decision recorded before merge
 - [ ] 4.8 Preview deletion works, no personal data in logs
 - [ ] 4.9 Production proof: zero rows, sign-in fails
