@@ -460,30 +460,30 @@ None material. The cascade deletes one user's rows in one statement. At MVP deck
 
 #### Automated
 
-- [x] 2.1 Unit and route tests pass
-- [x] 2.2 Lint passes
-- [x] 2.3 Build passes
+- [x] 2.1 Unit and route tests pass — fb08a73
+- [x] 2.2 Lint passes — fb08a73
+- [x] 2.3 Build passes — fb08a73
 
 #### Manual
 
-- [x] 2.4 Mutation check on the emailsMatch guard
+- [x] 2.4 Mutation check on the emailsMatch guard — fb08a73
 
 ### Phase 3: Account page and UI
 
 #### Automated
 
-- [ ] 3.1 Lint, tests and build pass
-- [ ] 3.2 `npm run preview` serves `/account` without `[unenv]` errors
+- [x] 3.1 Lint, tests and build pass
+- [x] 3.2 `npm run preview` serves `/account` without `[unenv]` errors
 
 #### Manual
 
-- [ ] 3.3 `/account` reachable from Topbar and protected
-- [ ] 3.4 Button enabled only on matching email (trim, case-insensitive)
-- [ ] 3.5 Deleting A lands on `/?deleted=1`, signed out, old credentials fail
-- [ ] 3.6 Zero rows for A in all four tables; B intact
-- [ ] 3.7 Keyboard and screen-reader run
-- [ ] 3.8 Error path keeps the account and allows retry
-- [ ] 3.9 `.dev.vars` restored and sha matches
+- [x] 3.3 `/account` reachable from Topbar and protected
+- [x] 3.4 Button enabled only on matching email (trim, case-insensitive)
+- [x] 3.5 Deleting A lands on `/?deleted=1`, signed out, old credentials fail
+- [x] 3.6 Zero rows for A in all four tables; B intact
+- [x] 3.7 Keyboard and screen-reader run
+- [x] 3.8 Error path keeps the account and allows retry
+- [x] 3.9 `.dev.vars` restored and sha matches
 
 ### Phase 4: Release
 

@@ -1,5 +1,9 @@
 ---
 import Topbar from "@/components/Topbar.astro";
+
+// Set by the account page's redirect after a deletion; nothing is stored, so a
+// reload of the same URL shows it again and a plain visit never does.
+const accountDeleted = Astro.url.searchParams.get("deleted") === "1" && !Astro.locals.user;
 ---
 
 <div class="bg-cosmic relative min-h-screen w-full overflow-hidden">
@@ -26,6 +30,17 @@ import Topbar from "@/components/Topbar.astro";
 
   <div class="relative z-10 p-4 sm:p-8">
     <Topbar />
+
+    {
+      accountDeleted && (
+        <p
+          role="status"
+          class="mx-auto max-w-4xl rounded-lg border border-emerald-500/30 bg-emerald-900/30 px-4 py-3 text-center text-sm text-emerald-200"
+        >
+          Your account and all of its data were deleted.
+        </p>
+      )
+    }
 
     <!-- Hero section -->
     <div class="mx-auto flex max-w-4xl flex-col items-center justify-center px-4 py-24 text-center sm:py-32 lg:py-40">
