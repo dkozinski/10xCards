@@ -1,7 +1,7 @@
 ---
 change_id: auth-unavailable-message
 title: Auth unavailable message
-status: impl_reviewed
+status: implemented
 created: 2026-10-25
 updated: 2026-10-25
 archived_at: null
