@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase";
 
 export const prerender = false;
@@ -21,7 +22,7 @@ export const POST: APIRoute = async (context) => {
   });
 
   if (error) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent(error.message)}`);
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(authErrorMessage(error))}`);
   }
 
   // A session here means email confirmation is off and the user is already signed
