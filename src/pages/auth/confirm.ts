@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase";
 
 export const prerender = false;
@@ -51,7 +52,7 @@ export const GET: APIRoute = async (context) => {
   if (tokenHash && type && ACCEPTED_OTP_TYPES.includes(type)) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (error) {
-      return signinWithError(context, error.message);
+      return signinWithError(context, authErrorMessage(error));
     }
     return context.redirect(next);
   }
@@ -60,7 +61,7 @@ export const GET: APIRoute = async (context) => {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return signinWithError(context, error.message);
+      return signinWithError(context, authErrorMessage(error));
     }
     return context.redirect(next);
   }
