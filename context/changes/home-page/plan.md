@@ -213,10 +213,10 @@ No data or schema changes. Bookmarks to `/dashboard` will hit a 404; the only us
 
 #### Automated
 
-- [x] 2.1 CI green on the PR
-- [x] 2.2 Workers Builds green on the merge commit
+- [x] 2.1 CI green on the PR — 469a705
+- [x] 2.2 Workers Builds green on the merge commit — 469a705
 
 #### Manual
 
-- [x] 2.3 Production `/` serves the 10xCards page and `/dashboard` returns 404
-- [x] 2.4 Owner sees the signed-in view on production
+- [x] 2.3 Production `/` serves the 10xCards page and `/dashboard` returns 404 — 469a705
+- [x] 2.4 Owner sees the signed-in view on production — 469a705
