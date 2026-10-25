@@ -231,10 +231,10 @@ No data or schema changes.
 
 #### Automated
 
-- [ ] 2.1 CI green on the PR
-- [ ] 2.2 Workers Builds green on the merge commit
+- [x] 2.1 CI green on the PR
+- [x] 2.2 Workers Builds green on the merge commit
 
 #### Manual
 
-- [ ] 2.3 Production fake-account probe redirects with "Invalid login credentials"
-- [ ] 2.4 Owner signs in on production successfully
+- [x] 2.3 Production fake-account probe redirects with "Invalid login credentials"
+- [x] 2.4 Owner signs in on production successfully
