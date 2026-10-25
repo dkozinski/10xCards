@@ -1,10 +1,10 @@
 ---
 change_id: home-page
 title: Home page
-status: impl_reviewed
+status: archived
 created: 2026-10-25
 updated: 2026-10-25
-archived_at: null
+archived_at: 2026-10-25T22:47:57Z
 ---
 
 ## Notes
