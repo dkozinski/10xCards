@@ -197,23 +197,23 @@ No data or schema changes. Bookmarks to `/dashboard` will hit a 404; the only us
 
 #### Automated
 
-- [x] 1.1 Lint passes
-- [x] 1.2 Full suite passes
-- [x] 1.3 Build passes
-- [x] 1.4 No template or dashboard references left in `src/`
+- [x] 1.1 Lint passes — a952e38
+- [x] 1.2 Full suite passes — a952e38
+- [x] 1.3 Build passes — a952e38
+- [x] 1.4 No template or dashboard references left in `src/` — a952e38
 
 #### Manual
 
-- [x] 1.5 Guest view on local dev shows the 10xCards page, working auth buttons and the "10xCards" tab title
-- [x] 1.6 Signed-in view shows "Welcome, <email>" and the three buttons open their pages
-- [x] 1.7 Topbar "Home" leads to `/` and `/dashboard` returns 404
-- [x] 1.8 `/?deleted=1` notice shows for a guest only
+- [x] 1.5 Guest view on local dev shows the 10xCards page, working auth buttons and the "10xCards" tab title — a952e38
+- [x] 1.6 Signed-in view shows "Welcome, <email>" and the three buttons open their pages — a952e38
+- [x] 1.7 Topbar "Home" leads to `/` and `/dashboard` returns 404 — a952e38
+- [x] 1.8 `/?deleted=1` notice shows for a guest only — a952e38
 
 ### Phase 2: Release
 
 #### Automated
 
-- [ ] 2.1 CI green on the PR
+- [x] 2.1 CI green on the PR
 - [ ] 2.2 Workers Builds green on the merge commit
 
 #### Manual
