@@ -216,16 +216,16 @@ No data or schema changes.
 
 #### Automated
 
-- [x] 1.1 Unit and route tests pass
-- [x] 1.2 Full suite passes
-- [x] 1.3 Lint passes
-- [x] 1.4 Build passes
+- [x] 1.1 Unit and route tests pass — 8e81712
+- [x] 1.2 Full suite passes — 8e81712
+- [x] 1.3 Lint passes — 8e81712
+- [x] 1.4 Build passes — 8e81712
 
 #### Manual
 
-- [x] 1.5 Local sign-in against a 503 stub shows the unavailable message
-- [x] 1.6 Dev server log shows one `Supabase auth unavailable` line (status 503) with no email
-- [x] 1.7 `.dev.vars` restored, sha256 matches backup
+- [x] 1.5 Local sign-in against a 503 stub shows the unavailable message — 8e81712
+- [x] 1.6 Dev server log shows one `Supabase auth unavailable` line (status 503) with no email — 8e81712
+- [x] 1.7 `.dev.vars` restored, sha256 matches backup — 8e81712
 
 ### Phase 2: Release
 
