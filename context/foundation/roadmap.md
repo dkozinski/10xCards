@@ -3,13 +3,13 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-11
+updated: 2026-10-26
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
 milestone_id: mvp-paste-to-review-loop
 milestone_seq: 1
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: 10xCards
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-1: Paste-to-review loop** — Status: open
+**M-1: Paste-to-review loop** — Status: done
 
 - **Intent:** Prove the whole loop the product is built around — a user pastes text, gets AI-drafted flashcards, keeps the ones worth keeping, and reviews them on a schedule — on a deck that only its owner can read.
 - **Source materials:** `context/foundation/prd.md` (v1)
@@ -188,12 +188,12 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 
 ## Open Roadmap Questions
 
-1. **Is there an upper character limit on pasted text submitted for generation, and what happens above it?** — Owner: user (PRD Open Question 1). Block: S-02, non-blocking — a default can be chosen at plan time.
+1. **Is there an upper character limit on pasted text submitted for generation, and what happens above it?** — Owner: user (PRD Open Question 1). Block: S-02, non-blocking — a default can be chosen at plan time. **Resolved 2026-10-26 (#1):** 20 000 characters; longer text is rejected with `validation_failed` (400).
 2. **Is the fact of a rejection recorded in aggregate, so the "75% accepted without modification" criterion can be computed at all?** — Owner: user (PRD Open Question 2). Block: S-03, blocking. **Resolved 2026-10-05 (#2):** yes, per-generation counts in a `generations` table.
 3. **Does an edited-then-saved proposal still count toward "75% of the deck created with AI", and where is the threshold between AI-assisted and manual?** — Owner: user (PRD Open Question 3). Block: S-03, blocking. **Resolved 2026-10-05 (#3):** yes, as `ai_edited`; any edit before save crosses the line.
 4. **When a saved flashcard is edited, is its grade history preserved or reset?** — Owner: downstream, tied to the algorithm chosen in S-05 (PRD Open Question 4). Block: S-04 and S-05, non-blocking. **Resolved 2026-10-11 (#4):** keep — an edit writes only `front`/`back`; the FSRS schedule and `review_logs` stay.
 5. **How is the irreversible account deletion confirmed to the user?** — Owner: downstream (PRD Open Question 5). Block: S-06, non-blocking. **Resolved 2026-10-11 (#5):** typed-email confirmation on `/account`, re-checked by the server.
-6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap.
+6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap. **Carried to M-2 (2026-10-26):** a test framework now exists (Vitest); whether each promise has a dedicated, deliberate check is still unaudited.
 
 ## Parked
 
@@ -209,6 +209,8 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 ## Milestone History
 
 (Append-only. Carried forward verbatim into each successor milestone's roadmap; empty on the very first milestone.)
+
+- **M-1: Paste-to-review loop** (`mvp-paste-to-review-loop`) — closed 2026-10-26. All twelve must-have FRs shipped: paste → AI proposals → human-gated save → FSRS review, owner-only deck, full account deletion. Q-6 (automated guardrail checks) carried to M-2.
 
 ## Done
 
