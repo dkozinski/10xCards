@@ -471,6 +471,14 @@ Set up component tests and use them to prove, through what the user sees, three 
 | GS-6             | An undecided review blocks a new generation: Generate is `aria-disabled` with the hint, and a click sends nothing                                                                                                                                                                                                                     | a new list silently replacing one the user has not decided on                                                                                                                | `review-and-save-proposals/plan.md:419`                    | a click on Generate while the review is shown                                                                                                                                                                                             |
 | GS-7             | Discarding every proposal returns to the text, ready to generate again                                                                                                                                                                                                                                                                | text lost after Discard all                                                                                                                                                  | `review-and-save-proposals/plan.md:43`                     | all rejected, then the save answers `{saved_count: 0}`                                                                                                                                                                                    |
 
+As implemented (impl-review phase 3, F2):
+
+- The deadline check for GS-1 is a separate test, "GS-1: sends every generation with a client deadline". Its stub also rejects with `TimeoutError`, and it asserts a live `AbortSignal`, so the intent of the row is unchanged.
+- The mutation triage (`mutation-report.md`, Run 6) added:
+  - a second GS-4 row, `validation_failed` with `fieldErrors: {}`, which must show "Invalid text.";
+  - a test without a GS id, "refuses a text under 500 characters without sending it", for the client-side length check;
+  - `method: "POST"` in GS-2, and a check in GS-7 that "Proposals discarded" is no longer announced.
+
 **Anti-patterns avoided**:
 
 - Asserting full UI copy: tests check the meaning-bearing parts and the affordances.
@@ -485,7 +493,7 @@ Set up component tests and use them to prove, through what the user sees, three 
 
 **Contract**:
 
-- **G3** is an `it.fails`. When the answer is `200 {proposals: [null]}`, the desired result is: the text is still in the field, an alert is shown, and Generate is enabled. The test adds its own `window` `error` listener and removes it in `finally` (see Critical Implementation Details). If the run still prints an unhandled-error banner, use `it.todo`.
+- **G3** is an `it.fails`. When the answer is `200 {proposals: [null]}`, the desired result is: the text is still in the field, an alert is shown, and Generate is enabled. The test adds its own `window` `error` listener and removes it in `finally` (see Critical Implementation Details). If the run still prints an unhandled-error banner, use `it.todo`. React also logs the render error with `console.warn`, so the test spies on it and restores it in the same `finally` (impl-review phase 3, F2).
 - **G4** is an `it.fails`. When the answer is `400 validation_failed` with `details: {}`, the desired result is that the spinner clears and "Invalid text." shows inline. The test adds its own `process.on("unhandledRejection", …)` listener before the submit and removes it in `finally`. It waits for "Invalid text.", never for the rejection.
 - Both titles start with `KNOWN GAP #<issue>:`.
 
@@ -814,29 +822,29 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 2.1 Upstream contract table passes with pins as expected failures
-- [x] 2.2 Each G1/G2 pin failed as it at the status assertion first
-- [x] 2.3 Full suite and lint pass
-- [x] 2.4 Stryker survivors in classification and mapping triaged
+- [x] 2.1 Upstream contract table passes with pins as expected failures — bcf79f4
+- [x] 2.2 Each G1/G2 pin failed as it at the status assertion first — bcf79f4
+- [x] 2.3 Full suite and lint pass — bcf79f4
+- [x] 2.4 Stryker survivors in classification and mapping triaged — bcf79f4
 
 #### Manual
 
-- [x] 2.5 Owner checked fixture builders against the OpenRouter docs
+- [x] 2.5 Owner checked fixture builders against the OpenRouter docs — bcf79f4
 
 ### Phase 3: Generate screen under failure
 
 #### Automated
 
-- [ ] 3.1 Generate screen suite passes in jsdom
-- [ ] 3.2 Full suite passes with node suites still in node
-- [ ] 3.3 No unhandled-error banner and no act warning
-- [ ] 3.4 G3 and G4 pins failed for the right reason before it.fails
-- [ ] 3.5 Lint passes on the tsx test
-- [ ] 3.6 Stryker survivors in generate() triaged
+- [x] 3.1 Generate screen suite passes in jsdom
+- [x] 3.2 Full suite passes with node suites still in node
+- [x] 3.3 No unhandled-error banner and no act warning
+- [x] 3.4 G3 and G4 pins failed for the right reason before it.fails
+- [x] 3.5 Lint passes on the tsx test
+- [x] 3.6 Stryker survivors in generate() triaged
 
 #### Manual
 
-- [ ] 3.7 Owner confirmed the test list covers risk #1 screen scenarios
+- [x] 3.7 Owner confirmed the test list covers risk #1 screen scenarios
 
 ### Phase 4: Review and save under failure
 

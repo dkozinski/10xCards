@@ -10,6 +10,7 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    // Node by default; component tests opt in to jsdom with a per-file comment.
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });
