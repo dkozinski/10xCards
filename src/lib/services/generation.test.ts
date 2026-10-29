@@ -1,15 +1,16 @@
 import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GenerationError, generateProposals } from "./generation";
+import { completionBody, errorBody } from "./openrouter.fixtures";
 
 const SOURCE = `Fotosynteza zachodzi w chloroplastach. ${"Tekst źródłowy. ".repeat(40)}`;
 const KEY = "sk-or-test";
 
 type Init = RequestInit & { body: string };
 
+// The documented envelope; `extra` replaces top-level fields such as usage.
 function completion(content: unknown, extra: Record<string, unknown> = {}) {
   return Response.json({
-    choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }],
-    usage: { prompt_tokens: 100, completion_tokens: 50, cost: 0.0001 },
+    ...completionBody(typeof content === "string" ? content : JSON.stringify(content)),
     ...extra,
   });
 }
@@ -117,11 +118,16 @@ describe("generateProposals — outgoing request", () => {
 
 describe("generateProposals — results", () => {
   it("returns trimmed proposals and usage", async () => {
-    const fetchImpl = stubFetch(completion({ cards: [{ front: "  Co to? ", back: " To.\n" }] }));
+    const fetchImpl = stubFetch(
+      completion(
+        { cards: [{ front: "  Co to? ", back: " To.\n" }] },
+        { usage: { prompt_tokens: 120, completion_tokens: 40, total_tokens: 160, cost: 0.0002 } },
+      ),
+    );
     const result = await generateProposals(KEY, { text: SOURCE }, { fetchImpl });
     expect(result.proposals).toEqual([{ front: "Co to?", back: "To." }]);
     expect(result.meta.dropped).toBe(0);
-    expect(result.meta.usage).toEqual({ prompt_tokens: 100, completion_tokens: 50, cost: 0.0001 });
+    expect(result.meta.usage).toEqual({ prompt_tokens: 120, completion_tokens: 40, cost: 0.0002 });
   });
 
   it.each([
@@ -181,7 +187,7 @@ describe("generateProposals — results", () => {
 describe("generateProposals — failures", () => {
   it.each([
     ["non-JSON content", "Here are your cards: ..."],
-    ["truncated JSON (finish_reason length)", '{"cards":[{"front":"Q","ba'],
+    ["truncated JSON", '{"cards":[{"front":"Q","ba'],
     ["wrong shape", { flashcards: [] }],
   ])("maps %s to invalid_output", async (_name, content) => {
     const fetchImpl = stubFetch(completion(content));
@@ -191,8 +197,8 @@ describe("generateProposals — failures", () => {
   it("carries finish_reason and completion_tokens on a truncated reply", async () => {
     const fetchImpl = stubFetch(
       Response.json({
-        choices: [{ message: { content: '{"cards":[{"front":"Q","ba' }, finish_reason: "length" }],
-        usage: { prompt_tokens: 5450, completion_tokens: 3500, cost: 0.003 },
+        ...completionBody('{"cards":[{"front":"Q","ba', { finish_reason: "length" }),
+        usage: { prompt_tokens: 5450, completion_tokens: 3500, total_tokens: 8950, cost: 0.003 },
       }),
     );
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
@@ -200,22 +206,24 @@ describe("generateProposals — failures", () => {
     expect(error.diagnostics).toEqual({ finishReason: "length", completionTokens: 3500 });
   });
 
-  it("drops a finish_reason that is not a short identifier", async () => {
-    const fetchImpl = stubFetch(
-      Response.json({ choices: [{ message: { content: "not json" }, finish_reason: `stopped at ${SOURCE}` }] }),
-    );
+  // Text on either side of an identifier: each anchor of the check is needed.
+  it.each([
+    ["with text after an identifier", `stopped at ${SOURCE}`],
+    ["with text before an identifier", `${SOURCE.trim()} stop`],
+  ])("drops a finish_reason %s", async (_name, reason) => {
+    const fetchImpl = stubFetch(Response.json(completionBody("not json", { finish_reason: reason })));
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
     expect(error.diagnostics.finishReason).toBeUndefined();
     expect(JSON.stringify(error.diagnostics)).not.toContain(SOURCE);
   });
 
   it("maps null content (empty reply or refusal) to invalid_output", async () => {
-    const fetchImpl = stubFetch(Response.json({ choices: [{ message: { content: null } }] }));
+    const fetchImpl = stubFetch(Response.json(completionBody(null)));
     expect((await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }))).kind).toBe("invalid_output");
   });
 
   it("maps a 200 with an error body and no choices to upstream_body_error, without echoing it", async () => {
-    const fetchImpl = stubFetch(Response.json({ error: { code: 502, message: `provider echoed: ${SOURCE}` } }));
+    const fetchImpl = stubFetch(Response.json(errorBody(502, `provider echoed: ${SOURCE}`)));
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
     expect(error.kind).toBe("upstream_body_error");
     expectNoSourceText(error);
@@ -223,7 +231,7 @@ describe("generateProposals — failures", () => {
 
   it("maps finish_reason error with partial content to upstream_body_error", async () => {
     const content = JSON.stringify({ cards: [{ front: "Q", back: "A" }] });
-    const fetchImpl = stubFetch(Response.json({ choices: [{ message: { content }, finish_reason: "error" }] }));
+    const fetchImpl = stubFetch(Response.json(completionBody(content, { finish_reason: "error" })));
     expect((await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }))).kind).toBe("upstream_body_error");
   });
 
@@ -233,14 +241,15 @@ describe("generateProposals — failures", () => {
   });
 
   it.each([402, 429, 502, 503])("maps HTTP %i to upstream_http with the status", async (status) => {
-    const fetchImpl = stubFetch(Response.json({ error: { code: status, message: "x" } }, { status }));
+    const fetchImpl = stubFetch(Response.json(errorBody(status, "x"), { status }));
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
     expect(error.kind).toBe("upstream_http");
     expect(error.status).toBe(status);
   });
 
+  // 403 also covers moderation blocks; whether those stay a misconfiguration is open (#44).
   it.each([400, 401, 403, 404])("maps HTTP %i to upstream_config with the status", async (status) => {
-    const fetchImpl = stubFetch(Response.json({ error: { code: status, message: "x" } }, { status }));
+    const fetchImpl = stubFetch(Response.json(errorBody(status, "x"), { status }));
     const error = await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl }));
     expect(error.kind).toBe("upstream_config");
     expect(error.status).toBe(status);
@@ -297,7 +306,7 @@ describe("generateProposals — failures", () => {
   });
 
   it("never puts source text or upstream text into the error message", async () => {
-    const fetchImpl = stubFetch(Response.json({ error: { code: 400, message: SOURCE } }, { status: 400 }));
+    const fetchImpl = stubFetch(Response.json(errorBody(400, SOURCE), { status: 400 }));
     expectNoSourceText(await failure(generateProposals(KEY, { text: SOURCE }, { fetchImpl })));
   });
 });

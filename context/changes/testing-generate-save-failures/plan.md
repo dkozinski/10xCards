@@ -314,7 +314,7 @@ Pin what `POST /api/proposals` answers for every documented OpenRouter response 
 
 **Contract**:
 
-- A header cites https://openrouter.ai/docs/api/reference/overview and https://openrouter.ai/docs/api/reference/errors-and-debugging, checked 2026-10-26.
+- A header cites https://openrouter.ai/docs/api/reference/overview and https://openrouter.ai/docs/api/reference/errors-and-debugging, checked 2026-10-28. It also cites https://openrouter.ai/openapi.json for two fields the `/chat/completions` schema omits: `choices[].index`, and `provider`, which the non-streaming `"chat.completion"` body of a Batch API result carries (impl-review phase 2, F2 and F3).
 - A success builder returns the full envelope:
   - `id`, `provider`, `model`, `object` and `created`;
   - `choices[0]` = `{ index, finish_reason: "stop", native_finish_reason, message: { role: "assistant", content } }`;
@@ -333,8 +333,10 @@ Pin what `POST /api/proposals` answers for every documented OpenRouter response 
 
 **Contract**:
 
-- `completion()` (`:9-15`) delegates to the success builder.
-- No assertion changes.
+- `completion()` (`:9-15`) delegates to the success builder, and every other inline OpenRouter body uses the builders too (impl-review phase 2, F3).
+- No assertion changes. Two exceptions came after the plan was approved:
+  - The mutation triage (mutant #4) turned "drops a finish_reason" into an `it.each` with one new case. The existing assertions are unchanged.
+  - "returns trimmed proposals and usage" passes its own `usage`, so the expected numbers sit next to the assertion and not in the builder's defaults (impl-review phase 2, F3 and F4).
 - Service-only concerns stay in this file: the outgoing request, diagnostics, the timeouts, and the rule that the service never logs.
 
 #### 3. Upstream contract table
@@ -345,35 +347,37 @@ Pin what `POST /api/proposals` answers for every documented OpenRouter response 
 
 **Contract**:
 
-- Mock only `astro:env/server` (key present), with the same factory shape as `_index.test.ts:10-15`.
+- Mock only `astro:env/server` (key present). The factory returns a constant, not the hoisted getter of `_index.test.ts:10-15`, because this file never needs a missing key (impl-review phase 2, F3).
+- Each row also asserts how the stubbed `fetch` settled: `fulfilled`, and `rejected` only for F16. Otherwise an answer that throws while it is built passes as a network failure (impl-review phase 2, F1).
 - Silence the route's `console.info` / `console.error` with spies.
 - Stub `fetch` per row with `vi.stubGlobal`, and call `vi.unstubAllGlobals()` in `afterEach` (see Critical Implementation Details, _Stubs outlive their test_).
 - Rows (oracle: OpenRouter docs, test-plan §2 #1 as decided on 2026-10-27, archived owner decisions):
 
-| Row | Upstream answer                                                            | Expected                                                                                                                                  | Regression caught                                                        |
-| --- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| S1  | 200, `stop`, 3 valid cards                                                 | 200, the 3 trimmed cards in order                                                                                                         | success path broken by envelope fields                                   |
-| S2  | 200, `stop`, 5 cards of which 2 have a 250-character front                 | 200, exactly the 3 valid cards in order                                                                                                   | invalid cards shown; or one bad card fails the whole result              |
-| S3  | 200, `stop`, 25 valid cards                                                | 200, the first 20                                                                                                                         | cap removed                                                              |
-| S4  | 200, `finish_reason: null`, 3 valid cards                                  | 200 (owner decision: denylist, not allowlist)                                                                                             | an allowlist that turns a provider quirk into an outage                  |
-| S5  | 200, `stop`, 22 cards of which 3 among the first 20 are invalid            | 200, all 19 valid cards in order: invalid cards do not use up the cap (`ai-proposals-from-text/plan-brief.md:71`: "drop invalid, cap 20") | a cap applied before the drop, which shows 17                            |
-| F1  | 200 with a top-level `error` body (failure after a provider accepted)      | 502 `generation_failed`                                                                                                                   | an error body read as success                                            |
-| F2  | 200 `{}`                                                                   | 502                                                                                                                                       | missing choices accepted                                                 |
-| F3  | 200 `choices: []`                                                          | 502                                                                                                                                       |                                                                          |
-| F4  | a choice without `message`                                                 | 502                                                                                                                                       |                                                                          |
-| F5  | `finish_reason: "error"` with a choice-level `error` and parseable content | 502                                                                                                                                       | partial content from a failed choice shown                               |
-| F6  | `content: null` ("no content generated" on cold start)                     | 502                                                                                                                                       |                                                                          |
-| F7  | `content: ""`                                                              | 502                                                                                                                                       |                                                                          |
-| F8  | prose content                                                              | 502                                                                                                                                       |                                                                          |
-| F9  | JSON wrapped in a Markdown fence                                           | 502                                                                                                                                       | lenient parsing creeping in                                              |
-| F10 | `finish_reason: "length"` with cut JSON                                    | 502                                                                                                                                       |                                                                          |
-| F11 | `{"flashcards": […]}`                                                      | 502                                                                                                                                       |                                                                          |
-| F12 | `{"cards": []}`                                                            | 502                                                                                                                                       | "a 200 with zero cards means nothing worth a card" (§2 _Must challenge_) |
-| F13 | every card invalid                                                         | 502                                                                                                                                       |                                                                          |
-| F14 | 200 with an HTML body                                                      | 502                                                                                                                                       |                                                                          |
-| F15 | HTTP 402, 408, 429, 500, 502, 503 with an error envelope                   | 502                                                                                                                                       | a transient failure reported as non-retryable                            |
-| F16 | the network fails (fetch rejects `TypeError`)                              | 502                                                                                                                                       |                                                                          |
-| C1  | HTTP 400, 401, 404 with an error envelope                                  | 500 `server_error`                                                                                                                        | our misconfiguration shown as "usually temporary"                        |
+| Row | Upstream answer                                                                                                  | Expected                                                                                                                                  | Regression caught                                                                   |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| S1  | 200, `stop`, 3 valid cards                                                                                       | 200, the 3 trimmed cards in order                                                                                                         | success path broken by envelope fields                                              |
+| S2  | 200, `stop`, 5 cards of which 2 have a 250-character front                                                       | 200, exactly the 3 valid cards in order                                                                                                   | invalid cards shown; or one bad card fails the whole result                         |
+| S3  | 200, `stop`, 25 valid cards                                                                                      | 200, the first 20                                                                                                                         | cap removed                                                                         |
+| S4  | 200, `finish_reason: null`, 3 valid cards                                                                        | 200 (owner decision: denylist, not allowlist)                                                                                             | an allowlist that turns a provider quirk into an outage                             |
+| S5  | 200, `stop`, 22 cards of which 3 among the first 20 are invalid                                                  | 200, all 19 valid cards in order: invalid cards do not use up the cap (`ai-proposals-from-text/plan-brief.md:71`: "drop invalid, cap 20") | a cap applied before the drop, which shows 17                                       |
+| F1  | 200 with a top-level `error` body (failure after a provider accepted)                                            | 502 `generation_failed`                                                                                                                   | an error body read as success                                                       |
+| F1b | 200 with a top-level `error` next to a usable choice (added by the mutation triage; no documented body has both) | 502                                                                                                                                       | a usable choice that outranks the documented "check for `error` even on a 200" rule |
+| F2  | 200 `{}`                                                                                                         | 502                                                                                                                                       | missing choices accepted                                                            |
+| F3  | 200 `choices: []`                                                                                                | 502                                                                                                                                       |                                                                                     |
+| F4  | a choice without `message`                                                                                       | 502                                                                                                                                       |                                                                                     |
+| F5  | `finish_reason: "error"` with a choice-level `error` and parseable content                                       | 502                                                                                                                                       | partial content from a failed choice shown                                          |
+| F6  | `content: null` ("no content generated" on cold start)                                                           | 502                                                                                                                                       |                                                                                     |
+| F7  | `content: ""`                                                                                                    | 502                                                                                                                                       |                                                                                     |
+| F8  | prose content                                                                                                    | 502                                                                                                                                       |                                                                                     |
+| F9  | JSON wrapped in a Markdown fence                                                                                 | 502                                                                                                                                       | lenient parsing creeping in                                                         |
+| F10 | `finish_reason: "length"` with cut JSON                                                                          | 502                                                                                                                                       |                                                                                     |
+| F11 | `{"flashcards": […]}`                                                                                            | 502                                                                                                                                       |                                                                                     |
+| F12 | `{"cards": []}`                                                                                                  | 502                                                                                                                                       | "a 200 with zero cards means nothing worth a card" (§2 _Must challenge_)            |
+| F13 | every card invalid                                                                                               | 502                                                                                                                                       |                                                                                     |
+| F14 | 200 with an HTML body                                                                                            | 502                                                                                                                                       |                                                                                     |
+| F15 | HTTP 402, 408, 429, 500, 502, 503 with an error envelope                                                         | 502                                                                                                                                       | a transient failure reported as non-retryable                                       |
+| F16 | the network fails (fetch rejects `TypeError`)                                                                    | 502                                                                                                                                       |                                                                                     |
+| C1  | HTTP 400, 401, 404 with an error envelope                                                                        | 500 `server_error`                                                                                                                        | our misconfiguration shown as "usually temporary"                                   |
 
 - 403 is deliberately absent; it belongs to the G5 issue.
 - Each failure row also asserts the error body's `code`.
@@ -781,7 +785,7 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 - Research: `context/changes/testing-generate-save-failures/research.md`
 - Test plan: `context/foundation/test-plan.md` (§2 risks #1 and #3, §3 Phase 1, §6)
 - Archived decisions: `context/archive/2026-09-29-ai-proposals-from-text/`, `context/archive/2026-10-05-review-and-save-proposals/`
-- OpenRouter: https://openrouter.ai/docs/api/reference/overview, https://openrouter.ai/docs/api/reference/errors-and-debugging (checked 2026-10-26)
+- OpenRouter: https://openrouter.ai/docs/api/reference/overview, https://openrouter.ai/docs/api/reference/errors-and-debugging (checked 2026-10-26, re-checked 2026-10-28), https://openrouter.ai/openapi.json (checked 2026-10-28)
 - Cloudflare Workers Builds, build image (Node from `.nvmrc`): https://developers.cloudflare.com/workers/ci-cd/builds/build-image/ (checked 2026-10-27)
 - Astro routing, "Excluding pages": https://docs.astro.build/en/guides/routing/#excluding-pages (checked 2026-10-27)
 - Vitest 5.0.2 `vi.stubGlobal`; Stryker 10 configuration and vitest runner (checked 2026-10-27)
@@ -795,29 +799,29 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 1.1 Full suite passes with renamed route tests and the layout guard
-- [x] 1.2 Layout guard fails on an unprefixed test under src/pages
-- [x] 1.3 Lint passes
-- [x] 1.4 Build routes no test file
-- [x] 1.5 Stryker smoke run completes and is recorded
+- [x] 1.1 Full suite passes with renamed route tests and the layout guard — 57ae7f7
+- [x] 1.2 Layout guard fails on an unprefixed test under src/pages — 57ae7f7
+- [x] 1.3 Lint passes — 57ae7f7
+- [x] 1.4 Build routes no test file — 57ae7f7
+- [x] 1.5 Stryker smoke run completes and is recorded — 57ae7f7
 
 #### Manual
 
-- [x] 1.6 Five known-gap issues opened after owner approval
-- [x] 1.7 Owner reviewed the AGENTS.md rule
+- [x] 1.6 Five known-gap issues opened after owner approval — 57ae7f7
+- [x] 1.7 Owner reviewed the AGENTS.md rule — 57ae7f7
 
 ### Phase 2: Upstream contract at the API boundary
 
 #### Automated
 
-- [ ] 2.1 Upstream contract table passes with pins as expected failures
-- [ ] 2.2 Each G1/G2 pin failed as it at the status assertion first
-- [ ] 2.3 Full suite and lint pass
-- [ ] 2.4 Stryker survivors in classification and mapping triaged
+- [x] 2.1 Upstream contract table passes with pins as expected failures
+- [x] 2.2 Each G1/G2 pin failed as it at the status assertion first
+- [x] 2.3 Full suite and lint pass
+- [x] 2.4 Stryker survivors in classification and mapping triaged
 
 #### Manual
 
-- [ ] 2.5 Owner checked fixture builders against the OpenRouter docs
+- [x] 2.5 Owner checked fixture builders against the OpenRouter docs
 
 ### Phase 3: Generate screen under failure
 
