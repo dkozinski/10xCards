@@ -58,3 +58,7 @@ pnpm-debug.log*
 
 # supabase studio saves SQL editor queries here
 supabase/snippets/
+
+# Stryker mutation testing: sandbox copies and the local HTML report
+.stryker-tmp/
+reports/mutation/

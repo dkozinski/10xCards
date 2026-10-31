@@ -10,6 +10,10 @@ This file provides guidance to AI Agent when working with code in this repositor
   `authenticated` roles. Never a single `for all` policy.
 - **API routes must export `const prerender = false`.** Without it the route is
   statically prerendered at build time and silently stops responding.
+- **Non-route files under `src/pages/` start with `_`** (`_index.test.ts`,
+  `_helpers.ts`, or a `_`-prefixed directory). Astro turns every `.ts`/`.js` file
+  there into an endpoint, so an unprefixed test ships to production with Vitest
+  bundled into the Worker. `src/pages-layout.test.ts` enforces this for tests.
 - **API error codes are a closed vocabulary.** Input validation returns **400**
   (never 422) with code `validation_failed`; unparseable JSON → `invalid_json`;
   missing session → `unauthorized` (401); the addressed resource does not exist
@@ -77,6 +81,11 @@ managed block, and `CLAUDE.md` is gitignored, so there is no way back. Use
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm test` — every Vitest suite once (Node by default; component tests opt in to jsdom per file)
+- `npx vitest run <file>` — one test file
+- `npx stryker run --mutate "<file>:<from>-<to>"` — mutation testing on a line range; local only, never in CI
+
+Test patterns (where a test goes, fixtures, component tests, known-gap pins): `context/foundation/test-plan.md` §6.
 
 Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 
@@ -123,6 +132,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every 
 ## Documentation & Note-taking
 
 When generating or updating markdown notes (e.g., in the Obsidian vault), follow these strict formatting rules to ensure they are beautiful, scannable, and highly readable:
+
 - **No text blobs:** Never output massive, unstructured walls of text. Break down information.
 - **Use callouts:** Liberally use GitHub-style markdown callouts (`> [!NOTE]`, `> [!IMPORTANT]`, `> [!TIP]`, `> [!WARNING]`) to highlight key definitions, rules, or core examples.
 - **Clear hierarchy:** Use Headings (`##`, `###`) to separate logical sections.
