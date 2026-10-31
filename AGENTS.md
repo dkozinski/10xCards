@@ -127,7 +127,7 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to `main`. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs `astro sync`, lint, `npm test` and build on every push and PR to `main`. It needs no repository secrets: both `astro:env` fields are optional secrets resolved at runtime on the Worker.
 
 ## Documentation & Note-taking
 

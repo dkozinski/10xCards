@@ -214,6 +214,8 @@ Before any new test lands, make the test tree safe to grow and get the tools rea
 
 **Contract**: Node environment. It reads the tree with `node:fs` and makes one assertion: the list of offenders is empty.
 
+As amended by the full-plan review (F2): a second assertion checks that the scan found at least one test file, so a broken pattern or path cannot pass without checking anything.
+
 #### 3. Rule in AGENTS.md
 
 **File**: `AGENTS.md` → `## Hard rules`
@@ -905,13 +907,13 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [ ] 6.1 CI green on the PR
-- [ ] 6.2 Workers Builds green on the merge commit
+- [x] 6.1 CI green on the PR — 85ef5d8
+- [x] 6.2 Workers Builds green on the merge commit — 85ef5d8
 
 #### Manual
 
-- [ ] 6.3 Pre-merge production probe recorded in the PR
-- [ ] 6.4 Q-6 Decision written in #6, roadmap and DAW-10 before the merge
-- [ ] 6.5 Known-gap issues #40–#44 updated after the push
-- [ ] 6.6 Post-deploy probe returns 404 and the home page serves 10xCards
-- [ ] 6.7 Owner signs in on production and /generate renders
+- [x] 6.3 Pre-merge production probe recorded in the PR — 85ef5d8
+- [x] 6.4 Q-6 Decision written in #6, roadmap and DAW-10 before the merge — d51a5ba
+- [x] 6.5 Known-gap issues #40–#44 updated after the push — 85ef5d8
+- [x] 6.6 Post-deploy probe returns 404 and the home page serves 10xCards — 85ef5d8
+- [x] 6.7 Owner signs in on production and /generate renders — 85ef5d8
