@@ -194,3 +194,24 @@ Each surviving mutant inside the targeted range gets one verdict, and every verd
 | 18  | `ProposalReview.tsx:132:5`  | `setError(null)` removed             | Cosmetic, ignored on purpose | The previous alert stays visible only while the next attempt is in flight. Every failure branch then sets its own message, a save with cards leaves for `/deck`, and a discard unmounts the review.                                                                  |
 | 19  | `ProposalReview.tsx:145:18` | `headers` → `{}`                     | Equivalent                   | The route never reads `Content-Type`. `readBody` checks only `Content-Length` and the streamed byte count, and the route runs `JSON.parse` on the text (`src/lib/read-body.ts`, `src/pages/api/generations/index.ts:28-42`). Same as Run 5 #12 on the generate side. |
 | 20  | `ProposalReview.tsx:145:36` | `"application/json"` → `""`          | Equivalent                   | Same as #19.                                                                                                                                                                                                                                                         |
+
+## Run 11 — Phase 5 cookbook check: classification and route mapping
+
+- **Date**: 2026-10-31
+- **Command**: the same as Run 3, now the Stryker example in `test-plan.md` §6.1. It ran to prove that the command works as written.
+- **Ranges**: re-checked; the mutated files and the tests that cover them are unchanged since Run 4.
+- **Result**: identical to Run 4: 67 mutants, 60 killed, 7 survived, 0 timed out, 0 without coverage, 0 errors. **Score: 89.55 %.**
+  - The dry run ran 88 tests, and 10.22 tests ran per mutant on average.
+  - The run took 16 s.
+- **Survivors**: Run 3's #3 and #5–#10, with the verdicts given there.
+
+## Run 12 — Phase 5 cookbook check: `generate()` with a 30 s timeout
+
+- **Date**: 2026-10-31
+- **Command**: `npx stryker run --mutate "src/components/generate/GenerateProposals.tsx:67-118" --timeoutMS 30000`, the Stryker example in `test-plan.md` §6.2. The cookbook keeps the higher timeout for jsdom modules after Runs 9 and 10.
+- **Range**: re-checked; the mutated file and the tests that cover it are unchanged since Run 6.
+- **Result**: identical to Run 6: 76 mutants, 61 killed, 14 survived, 0 timed out, 1 without coverage, 0 errors. **Score: 80.26 %.**
+  - The dry run ran 17 tests, and 3.59 tests ran per mutant on average.
+  - The run took 1 min 13 s.
+  - Run 6 had no timeouts either, so the higher limit changes nothing for this module.
+- **Survivors**: Run 5's #3, #4 (the one without coverage), #8, #9, #10 and #12–#21, with the verdicts given there.

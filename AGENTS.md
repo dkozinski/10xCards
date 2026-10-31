@@ -81,6 +81,11 @@ managed block, and `CLAUDE.md` is gitignored, so there is no way back. Use
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm test` — every Vitest suite once (Node by default; component tests opt in to jsdom per file)
+- `npx vitest run <file>` — one test file
+- `npx stryker run --mutate "<file>:<from>-<to>"` — mutation testing on a line range; local only, never in CI
+
+Test patterns (where a test goes, fixtures, component tests, known-gap pins): `context/foundation/test-plan.md` §6.
 
 Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 

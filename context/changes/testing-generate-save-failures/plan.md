@@ -686,6 +686,19 @@ Turn what shipped into the canonical answer to "how do I add a test for X here?"
 - The edited §2 cell (Risk Response Guidance, row #1) carries no file anchors: `awk '/^\| #1 \|/{n++; if ($0 ~ /src\/|\.tsx?|:[0-9]/) bad++} END{print n" row, "bad+0" anchors"}' context/foundation/test-plan.md` prints `1 row, 0 anchors`, and the cell names no function or schema. The hot-spot directories cited elsewhere in §2 stay.
 - Prettier check passes on the edited markdown: `npx prettier --check context/foundation/test-plan.md AGENTS.md context/changes/testing-generate-save-failures/*.md`
 
+As implemented (impl-review phase 5, F4):
+
+- 5.2 ran as `awk '/^\| #1 +\|/{…}'`. The regex above allows exactly one space after `#1`, but Prettier pads the cell to `| #1   |`, so it matches no row and prints ` row, 0 anchors`.
+- §6.1 and §6.2 give concrete commands on the reference files instead of `<file>`, so that 5.1 can run them as written; the `<file>` form lives in `AGENTS.md`. §6.2's Stryker example adds `--timeoutMS 30000` for jsdom modules (`mutation-report.md`, Runs 9–10).
+- The Stryker runs behind 5.1 are Runs 11 and 12 in `mutation-report.md`.
+- The §4 Version column shows `package.json` ranges (`^10.4.2`), as the other rows of that table do.
+- The phase review corrected (F1–F3, F5–F9):
+  - §6.1: which module a route test mocks, `_`-prefixed directories, re-deriving Stryker ranges, and retiring a fixed pin;
+  - §6.2: `mockReset()` in `afterEach`, and the range rule next to its Stryker example;
+  - §6.6: one request for a double click;
+  - §8: the strategy line notes the §2 backport;
+  - the wording of Runs 11–12.
+
 #### Manual Verification:
 
 - The owner reviewed the diffs of `test-plan.md` and `AGENTS.md`
@@ -866,27 +879,27 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 4.1 Review and save suite passes in jsdom
-- [x] 4.2 Full suite passes with no unhandled error or act warning
-- [x] 4.3 G4 pin failed for the right reason before it.fails
-- [x] 4.4 Lint passes
-- [x] 4.5 Stryker survivors in cardErrors, buildCommand and save triaged
+- [x] 4.1 Review and save suite passes in jsdom — 0de346f
+- [x] 4.2 Full suite passes with no unhandled error or act warning — 0de346f
+- [x] 4.3 G4 pin failed for the right reason before it.fails — 0de346f
+- [x] 4.4 Lint passes — 0de346f
+- [x] 4.5 Stryker survivors in cardErrors, buildCommand and save triaged — 0de346f
 
 #### Manual
 
-- [x] 4.6 Owner confirmed the test list covers risk #3 scenarios
+- [x] 4.6 Owner confirmed the test list covers risk #3 scenarios — 0de346f
 
 ### Phase 5: Cookbook and test-plan sync
 
 #### Automated
 
-- [ ] 5.1 Every §6.1 and §6.2 run command runs green as written
-- [ ] 5.2 The edited §2 row #1 cell carries no file anchors
-- [ ] 5.3 Prettier check passes on the edited markdown
+- [x] 5.1 Every §6.1 and §6.2 run command runs green as written
+- [x] 5.2 The edited §2 row #1 cell carries no file anchors
+- [x] 5.3 Prettier check passes on the edited markdown
 
 #### Manual
 
-- [ ] 5.4 Owner reviewed the test-plan and AGENTS.md diffs
+- [x] 5.4 Owner reviewed the test-plan and AGENTS.md diffs
 
 ### Phase 6: Release
 
