@@ -3,7 +3,7 @@ project: "10xCards"
 version: 1
 status: draft
 created: 2026-09-17
-updated: 2026-10-26
+updated: 2026-10-31
 prd_version: 1
 main_goal: low-complexity
 top_blocker: skills
@@ -193,7 +193,7 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. It sho
 3. **Does an edited-then-saved proposal still count toward "75% of the deck created with AI", and where is the threshold between AI-assisted and manual?** — Owner: user (PRD Open Question 3). Block: S-03, blocking. **Resolved 2026-10-05 (#3):** yes, as `ai_edited`; any edit before save crosses the line.
 4. **When a saved flashcard is edited, is its grade history preserved or reset?** — Owner: downstream, tied to the algorithm chosen in S-05 (PRD Open Question 4). Block: S-04 and S-05, non-blocking. **Resolved 2026-10-11 (#4):** keep — an edit writes only `front`/`back`; the FSRS schedule and `review_logs` stay.
 5. **How is the irreversible account deletion confirmed to the user?** — Owner: downstream (PRD Open Question 5). Block: S-06, non-blocking. **Resolved 2026-10-11 (#5):** typed-email confirmation on `/account`, re-checked by the server.
-6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap. **Carried to M-2 (2026-10-26):** a test framework now exists (Vitest); whether each promise has a dedicated, deliberate check is still unaudited.
+6. **Do the two guardrail promises get automated checks, and if so, starting where?** — Owner: user. Block: roadmap-wide, non-blocking. The PRD states two absolutes — no card reaches the deck without an explicit save, and a review session never loses progress or shows a card that is not the user's — while the repository has no test framework at all. Neither promise is realistically demonstrable by hand at S-05. This is recorded as a question rather than a foundation because introducing unfamiliar test tooling ahead of the first working slice cuts against this milestone's sequencing goal; the decision belongs to the owner, not to the roadmap. **Carried to M-2 (2026-10-26):** a test framework now exists (Vitest); whether each promise has a dedicated, deliberate check is still unaudited. **Decided 2026-10-31 (#6, open until rollout Phase 2 ships):** yes, phased, as `context/foundation/test-plan.md` §3 lays out. Rollout Phase 1 (`testing-generate-save-failures`) ships the first deliberate checks for consent before save; rollout Phase 2 covers review-session reliability on a real database.
 
 ## Parked
 

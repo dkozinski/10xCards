@@ -893,13 +893,13 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 5.1 Every §6.1 and §6.2 run command runs green as written
-- [x] 5.2 The edited §2 row #1 cell carries no file anchors
-- [x] 5.3 Prettier check passes on the edited markdown
+- [x] 5.1 Every §6.1 and §6.2 run command runs green as written — a947ba7
+- [x] 5.2 The edited §2 row #1 cell carries no file anchors — a947ba7
+- [x] 5.3 Prettier check passes on the edited markdown — a947ba7
 
 #### Manual
 
-- [x] 5.4 Owner reviewed the test-plan and AGENTS.md diffs
+- [x] 5.4 Owner reviewed the test-plan and AGENTS.md diffs — a947ba7
 
 ### Phase 6: Release
 
