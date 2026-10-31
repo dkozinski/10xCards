@@ -118,3 +118,79 @@ Each surviving mutant inside the targeted range gets one verdict, and every verd
   - The dry run ran 17 tests, and 3.59 tests ran per mutant on average.
   - The run took 1 min 5 s.
 - **Survivors**: Run 5's #1, #2, #5, #6, #7, #11 and #22 are killed. The 15 left are #3, #4 (the one without coverage), #8, #9, #10 and #12–#21, with the verdicts given in Run 5.
+
+## Run 7 — Phase 4: `cardErrors`, `buildCommand` and `save` in the review
+
+- **Date**: 2026-10-29
+- **Command**: `npx stryker run --mutate "src/components/generate/ProposalReview.tsx:43-53,src/components/generate/ProposalReview.tsx:110-194"`
+- **Ranges**: re-checked against the file before the run.
+  - Lines 43–53 are `cardErrors`, from its signature to its closing brace.
+  - Lines 110–194 are `buildCommand` and `save`; the JSX and `openWith` are left out.
+- **Tests**: the dry run ran 29 tests, from `GenerateProposals.test.tsx` and `ProposalReview.test.tsx` (both jsdom).
+- **Result**: 111 mutants: 89 killed, 14 survived, 6 timed out, 2 without coverage, 0 errors. **Score: 85.59 %.**
+  - 1.80 tests ran per mutant on average.
+  - The run took 2 min 3 s.
+
+| #   | Location                    | Mutant                                                          | Verdict                                         | Reason                                                                                                                                                                                                                                                                                                                              |
+| --- | --------------------------- | --------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `ProposalReview.tsx:182:14` | the `else` block after the per-card branch → `{}` (no coverage) | Killed by an added assertion (RV-5, no card)    | A `validation_failed` whose errors name no card, such as the route's `_root` answer for a body over its size cap (`src/pages/api/generations/index.ts:29-31`), would clear the spinner and show nothing: the user clicks Save and sees no reaction. The new test sends `_root` and expects "Could not save" with the list editable. |
+| 2   | `ProposalReview.tsx:183:9`  | `setError(SAVE_FAILED)` removed (no coverage)                   | Killed by an added assertion (RV-5, no card)    | Same as #1.                                                                                                                                                                                                                                                                                                                         |
+| 3   | `ProposalReview.tsx:46:19`  | `/^cards\.(\d+)\.(front\|back)$/` → without `$`                 | Equivalent                                      | The route keys each error by its full zod path (`fieldErrorsFromIssues`). Card fields are strings, so no path goes deeper than `cards.N.front` or `cards.N.back`, and no other field name starts with `front` or `back`.                                                                                                            |
+| 4   | `ProposalReview.tsx:46:19`  | the same regex without `^`                                      | Equivalent                                      | The only other keys are `_root`, `generation_id`, `generated_count`, `cards` and `cards.N.source`; none ends in `cards.N.front` or `cards.N.back` behind a prefix.                                                                                                                                                                  |
+| 5   | `ProposalReview.tsx:46:19`  | `(\d+)` → `(\d)`                                                | Killed by an added assertion (RV-5, two digits) | A list holds up to 20 cards, so indices 10–19 are real. An error on the 11th sent card or later would not be mapped: no editor opens, the user reads "Could not save" and every retry gets the same 400. The new test sends `cards.10.back` for 12 cards and expects the error on card 11.                                          |
+| 6   | `ProposalReview.tsx:47:9`   | `!match \|\| !messages?.[0]` → `&&`                             | Killed by an added assertion (RV-5, no card)    | A key that is not a card's, with a message, would reach `match[1]` on `null`. The TypeError rejects `save()` with `pending` set, so the spinner sticks, as in KNOWN GAP #43.                                                                                                                                                        |
+| 7   | `ProposalReview.tsx:47:9`   | the same condition → `false`                                    | Killed by an added assertion (RV-5, no card)    | Same as #6.                                                                                                                                                                                                                                                                                                                         |
+| 8   | `ProposalReview.tsx:47:20`  | `messages?.[0]` → `messages[0]`                                 | Equivalent                                      | `fieldErrorsFromIssues` builds every value as an array (`??= []`, then `push`), and the `_root` answer is an array too, so `messages` is never `undefined` or `null` in a body from our route.                                                                                                                                      |
+| 9   | `ProposalReview.tsx:49:9`   | `if (!id) continue` → `if (false)`                              | Equivalent                                      | The route validates the very array the client sent, so every `cards.N` index is below the number of sent cards and has an item behind it. An array that is too long fails as one `cards` key, which the regex skips.                                                                                                                |
+| 10  | `ProposalReview.tsx:174:9`  | `code === "validation_failed" && details` → `\|\|`              | Equivalent                                      | Only the two `validation_failed` answers carry `details` (`src/pages/api/generations/index.ts:29`, `:46`), and both carry it. No answer the route can give takes a different branch. Same as Run 5 #18.                                                                                                                             |
+| 11  | `ProposalReview.tsx:174:9`  | `code === "validation_failed"` → `true`                         | Equivalent                                      | Same as #10.                                                                                                                                                                                                                                                                                                                        |
+| 12  | `ProposalReview.tsx:174:41` | `body?.error?.details` → `body?.error.details`                  | Equivalent                                      | Evaluated only after `code === "validation_failed"`, which already proves that `body` and `body.error` exist. Same as Run 5 #19.                                                                                                                                                                                                    |
+| 13  | `ProposalReview.tsx:174:41` | `body?.error?.details` → `body.error?.details`                  | Equivalent                                      | Same as #12.                                                                                                                                                                                                                                                                                                                        |
+| 14  | `ProposalReview.tsx:179:11` | `byItem.size > 0` → `true`                                      | Killed by an added assertion (RV-5, no card)    | An error that names no card would read "0 cards need fixing before saving.", with nothing to fix in the list.                                                                                                                                                                                                                       |
+| 15  | `ProposalReview.tsx:179:11` | `>` → `>=`                                                      | Killed by an added assertion (RV-5, no card)    | Same as #14.                                                                                                                                                                                                                                                                                                                        |
+| 16  | `ProposalReview.tsx:181:9`  | `setError(needsFixing(byItem.size))` removed                    | Killed by an added assertion (RV-5)             | The editor of a card the server rejected would open silently. In a list of 20 it may be off-screen, and a screen reader hears nothing; the summary alert was an owner decision (`review-and-save-proposals/reviews/impl-review-phase-3.md`, F2). RV-5 now expects an alert that names one card.                                     |
+
+## Run 8 — Phase 4 after the added assertions
+
+- **Date**: 2026-10-29
+- **Command**: the same as Run 7.
+- **Added** to `ProposalReview.test.tsx`:
+  - RV-5 checks that the alert names how many cards need fixing;
+  - "RV-5: marks a card past the tenth by its two-digit index", with `cards.10.back` on 12 cards;
+  - "RV-5: a validation error that names no card says the save failed and leaves the list editable", with the route's `_root` answer.
+- **Result**: 111 mutants: 97 killed, 8 survived, 6 timed out, 0 without coverage, 0 errors. **Score: 92.79 %.**
+  - The dry run ran 31 tests, and 2.08 tests ran per mutant on average.
+  - The run took 2 min 5 s.
+- **Survivors**: Run 7's #1, #2, #5, #6, #7, #14, #15 and #16 are killed. The 8 left are #3, #4 and #8–#13, with the verdicts given in Run 7.
+- **Not triaged here**: the 6 timed-out mutants. Stryker counts a timeout as detected, but none of them had a verdict (impl-review phase 4, F1). Runs 9 and 10 settle them.
+
+## Run 9 — Phase 4 after the review additions
+
+- **Date**: 2026-10-31
+- **Command**: the same as Run 7.
+- **Added** to `ProposalReview.test.tsx` (impl-review phase 4, F1–F3):
+  - an RV-4 row for a 200 with an HTML body, which the client reads as `null`;
+  - an edited card in RV-4, so that Revert is among the locked controls, and a check in RV-3 that the per-card controls are locked while the save is in flight;
+  - in RV-8, a check that card 1's editor is closed before Save and that the alert names one card.
+- **Result**: 111 mutants: 96 killed, 7 survived, 8 timed out, 0 without coverage, 0 errors. **Score: 93.69 %.**
+  - The dry run ran 32 tests, and 2.02 tests ran per mutant on average.
+  - The run took 2 min 29 s.
+- **Timeouts are not stable between runs.** Run 8 timed out on `131:9`, `132:5`, `145:18`, `145:36`, `159:18` and `160:31`. Run 9 timed out on `131:9`, `132:5`, `145:18` and `145:36` again, and also on `163:11` (twice) and two mutants at `174:9`, which Run 8 had killed. A failing jsdom test waits up to 1 s in each `findBy…` and `waitFor`, so a slow kill can exceed Stryker's default limit. The timeout count cannot be read as "detected", so Run 10 repeats the run with a higher limit.
+
+## Run 10 — Phase 4 with a 30 s timeout
+
+- **Date**: 2026-10-31
+- **Command**: `npx stryker run --mutate "src/components/generate/ProposalReview.tsx:43-53,src/components/generate/ProposalReview.tsx:110-194" --timeoutMS 30000`. The flag lives only on the command line; `stryker.config.json` is unchanged.
+- **Result**: 111 mutants: 99 killed, 12 survived, 0 timed out, 0 without coverage, 0 errors. **Score: 89.19 %.**
+  - The dry run ran 32 tests, and 2.91 tests ran per mutant on average.
+  - The run took 2 min 26 s.
+  - This is the score to quote for `ProposalReview.tsx`. Run 8's 92.79 % counted four mutants as timed out that no test detects (#17–#20 below).
+- **Killed now**: `159:18` and `160:31` (`body?.` → `body.`), by the HTML-body row in RV-4. Without it, an HTML page answering a save would throw with `pending` set, and the spinner would stick with no Try again. `163:11` and `174:9` are killed, as in Run 8.
+- **Survivors**: the 8 equivalents of Run 7 (#3, #4, #8–#13, verdicts as given there), plus:
+
+| #   | Location                    | Mutant                               | Verdict                      | Reason                                                                                                                                                                                                                                                               |
+| --- | --------------------------- | ------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 17  | `ProposalReview.tsx:131:9`  | `if (pending) return` → `if (false)` | Equivalent                   | Only two buttons call `save()`: Try again (`:337`, `disabled={pending}`) and Save (`:349`, `disabled={locked}`). Both are disabled while pending, and a disabled button fires no click. RV-3 pins the disabled Save during a double click.                           |
+| 18  | `ProposalReview.tsx:132:5`  | `setError(null)` removed             | Cosmetic, ignored on purpose | The previous alert stays visible only while the next attempt is in flight. Every failure branch then sets its own message, a save with cards leaves for `/deck`, and a discard unmounts the review.                                                                  |
+| 19  | `ProposalReview.tsx:145:18` | `headers` → `{}`                     | Equivalent                   | The route never reads `Content-Type`. `readBody` checks only `Content-Length` and the streamed byte count, and the route runs `JSON.parse` on the text (`src/lib/read-body.ts`, `src/pages/api/generations/index.ts:28-42`). Same as Run 5 #12 on the generate side. |
+| 20  | `ProposalReview.tsx:145:36` | `"application/json"` → `""`          | Equivalent                   | Same as #19.                                                                                                                                                                                                                                                         |

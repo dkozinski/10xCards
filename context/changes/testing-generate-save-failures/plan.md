@@ -556,6 +556,22 @@ Prove the client half of risk #3 through the request the review sends and throug
 | RV-7             | Rejecting every card discards: the body has `cards: []` with `generated_count` = N, the parent is told once, and there is no navigation                                                                                                                                                                                                                         | Discard all saving cards or navigating away                                                                                                                                                | `review-and-save-proposals/plan.md:43`                                                                                                   | all rejected                                                                         |
 | RV-8             | An invalid kept card blocks the save and opens its editor with the error; an invalid card that was rejected does not block it                                                                                                                                                                                                                                   | invalid card sent; a rejected card blocking the save                                                                                                                                       | `review-and-save-proposals/plan.md:384`, `:438`                                                                                          | front cleared; a rejected card with a cleared front                                  |
 
+As implemented (impl-review phase 4, F4):
+
+- RV-4 checks the save deadline in every row, not only the network row. Every request creates the signal, so no row needs a condition.
+- RV-5 starts from a frozen list: a network failure, then Try again, then the 400. On a first attempt nothing is locked, so only this order can catch "list left frozen after a 400". It ends by saving the fixed card again, and that body shows the list is no longer frozen.
+- RV-6 is two tests, one per scenario in its edge column.
+- RV-8 makes the invalid card by edit, reject and restore. That is the only way to keep an invalid card with its editor closed, so the test can prove that the save opens it.
+- RV-1 checks the unload guard before and after the save; RV-6's first test checks that it is still armed after the 401.
+- The mutation triage (`mutation-report.md`, Run 8) added:
+  - "RV-5: marks a card past the tenth by its two-digit index";
+  - "RV-5: a validation error that names no card says the save failed and leaves the list editable", with the route's `_root` answer;
+  - a check in RV-5 that the alert names how many cards need fixing.
+- The phase review added:
+  - an RV-4 row for a 200 with an HTML body (F1);
+  - an edited card in RV-4, so that Revert is among the locked controls, and a check in RV-3 that every per-card control is locked while the save is in flight (F2);
+  - in RV-8, a check that card 1's editor is closed before Save and that the alert names one card (F3).
+
 **Anti-patterns avoided**:
 
 - A happy path with a single unedited card (§2 #3).
@@ -835,30 +851,30 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 3.1 Generate screen suite passes in jsdom
-- [x] 3.2 Full suite passes with node suites still in node
-- [x] 3.3 No unhandled-error banner and no act warning
-- [x] 3.4 G3 and G4 pins failed for the right reason before it.fails
-- [x] 3.5 Lint passes on the tsx test
-- [x] 3.6 Stryker survivors in generate() triaged
+- [x] 3.1 Generate screen suite passes in jsdom — 5bc06c9
+- [x] 3.2 Full suite passes with node suites still in node — 5bc06c9
+- [x] 3.3 No unhandled-error banner and no act warning — 5bc06c9
+- [x] 3.4 G3 and G4 pins failed for the right reason before it.fails — 5bc06c9
+- [x] 3.5 Lint passes on the tsx test — 5bc06c9
+- [x] 3.6 Stryker survivors in generate() triaged — 5bc06c9
 
 #### Manual
 
-- [x] 3.7 Owner confirmed the test list covers risk #1 screen scenarios
+- [x] 3.7 Owner confirmed the test list covers risk #1 screen scenarios — 5bc06c9
 
 ### Phase 4: Review and save under failure
 
 #### Automated
 
-- [ ] 4.1 Review and save suite passes in jsdom
-- [ ] 4.2 Full suite passes with no unhandled error or act warning
-- [ ] 4.3 G4 pin failed for the right reason before it.fails
-- [ ] 4.4 Lint passes
-- [ ] 4.5 Stryker survivors in cardErrors, buildCommand and save triaged
+- [x] 4.1 Review and save suite passes in jsdom
+- [x] 4.2 Full suite passes with no unhandled error or act warning
+- [x] 4.3 G4 pin failed for the right reason before it.fails
+- [x] 4.4 Lint passes
+- [x] 4.5 Stryker survivors in cardErrors, buildCommand and save triaged
 
 #### Manual
 
-- [ ] 4.6 Owner confirmed the test list covers risk #3 scenarios
+- [x] 4.6 Owner confirmed the test list covers risk #3 scenarios
 
 ### Phase 5: Cookbook and test-plan sync
 
