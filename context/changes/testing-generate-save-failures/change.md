@@ -1,7 +1,7 @@
 ---
 change_id: testing-generate-save-failures
 title: Testing generate save failures
-status: impl_reviewed
+status: implemented
 created: 2026-10-26
 updated: 2026-10-31
 archived_at: null

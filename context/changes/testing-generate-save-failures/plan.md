@@ -905,13 +905,13 @@ None. No data or schema changes. The test-file renames keep history with `git mv
 
 #### Automated
 
-- [x] 6.1 CI green on the PR
-- [x] 6.2 Workers Builds green on the merge commit
+- [x] 6.1 CI green on the PR — 85ef5d8
+- [x] 6.2 Workers Builds green on the merge commit — 85ef5d8
 
 #### Manual
 
-- [x] 6.3 Pre-merge production probe recorded in the PR
-- [x] 6.4 Q-6 Decision written in #6, roadmap and DAW-10 before the merge
-- [x] 6.5 Known-gap issues #40–#44 updated after the push
-- [x] 6.6 Post-deploy probe returns 404 and the home page serves 10xCards
-- [x] 6.7 Owner signs in on production and /generate renders
+- [x] 6.3 Pre-merge production probe recorded in the PR — 85ef5d8
+- [x] 6.4 Q-6 Decision written in #6, roadmap and DAW-10 before the merge — 85ef5d8
+- [x] 6.5 Known-gap issues #40–#44 updated after the push — 85ef5d8
+- [x] 6.6 Post-deploy probe returns 404 and the home page serves 10xCards — 85ef5d8
+- [x] 6.7 Owner signs in on production and /generate renders — 85ef5d8
