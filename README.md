@@ -1,174 +1,151 @@
-# 10x Astro Starter
+# 10xCards
 
-![](./public/template.png)
+![10xCards](./public/10xCards.png)
 
-A modern, opinionated starter template for building fast, accessible web applications.
+A web app for learning with flashcards. Paste a piece of text, get flashcard proposals drafted by AI, keep the ones worth keeping, and review them on a spaced-repetition schedule.
 
-## Tech Stack
+**Live:** https://10xcards.dkozinski.workers.dev
 
-- [Astro](https://astro.build/) v6 - Modern web framework with server-first rendering
-- [React](https://react.dev/) v19 - UI library for interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
-- [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
-- [Cloudflare Workers](https://workers.cloudflare.com/) - Edge deployment runtime
+> [!NOTE]
+> Built as the course project for 10xDevs. The requirements, roadmap, test strategy and every shipped change, with its research, plan and review, live in [`context/`](#project-documentation).
+
+## What it does
+
+- **Sign in** with email and password.
+- **Paste text** (up to 20 000 characters) and get flashcard proposals from an LLM via OpenRouter.
+- **Review each proposal**: accept, edit or reject it. Nothing reaches the deck without an explicit save.
+- **Write cards by hand**, and browse, edit or delete everything in the deck.
+- **Run a review session** scheduled by FSRS (`ts-fsrs`).
+- **Delete the account** together with all of its data.
+
+## Tech stack
+
+- [Astro](https://astro.build/) 6: full server-side rendering, deployed as a Cloudflare Worker
+- [React](https://react.dev/) 19: interactive islands only
+- [TypeScript](https://www.typescriptlang.org/) 5, [Tailwind CSS](https://tailwindcss.com/) 4, [shadcn/ui](https://ui.shadcn.com/)
+- [Supabase](https://supabase.com/): Postgres with row-level security, email/password auth with cookie sessions
+- [OpenRouter](https://openrouter.ai/): LLM gateway for card generation
+- [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs): review scheduling
+- [Cloudflare Workers](https://workers.cloudflare.com/): runtime and hosting, deployed by Workers Builds
+- [Vitest](https://vitest.dev/) with Testing Library for unit and component tests; [Stryker](https://stryker-mutator.io/) for local mutation testing
 
 ## Prerequisites
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+- Node.js 22.14.0 (see `.nvmrc`) and npm
+- [Docker](https://www.docker.com/) with about 7 GB of RAM, for the local Supabase stack
+- An [OpenRouter API key](https://openrouter.ai/settings/keys), only for AI generation; everything else works without it
 
-## Getting Started
+## Getting started
 
-1. Clone the repository:
+1. Clone and install:
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+   ```bash
+   git clone https://github.com/dkozinski/10xCards.git
+   cd 10xCards
+   npm install
+   ```
 
-2. Install dependencies:
+2. Start the local Supabase stack. On first run it pulls the Docker images and applies every migration in `supabase/migrations/`:
 
-```bash
-npm install
-```
+   ```bash
+   npx supabase start
+   ```
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
+3. Create `.dev.vars`, the file `npm run dev` reads its secrets from:
 
-4. Create a `.dev.vars` file for local Cloudflare dev secrets:
+   ```bash
+   cp .env.example .dev.vars
+   ```
 
-```bash
-cp .env.example .dev.vars
-```
+   Fill it in with the `API_URL` and `ANON_KEY` that `npx supabase status -o env` prints, and add your OpenRouter key:
 
-5. Run the development server:
+   ```
+   SUPABASE_URL=http://127.0.0.1:54321
+   SUPABASE_KEY=<ANON_KEY>
+   OPENROUTER_API_KEY=<your OpenRouter key>
+   ```
 
-```bash
-npm run dev
-```
+4. Run the app at http://localhost:4321:
 
-## Available Scripts
+   ```bash
+   npm run dev
+   ```
 
-- `npm run dev` - Start development server (Cloudflare workerd runtime)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint with type-checked rules
-- `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run format` - Run Prettier
+> [!WARNING]
+> `.dev.vars` decides which database the dev server talks to. With a hosted Supabase URL in it, everything you do locally writes to that project.
 
-## Project Structure
+A missing key does not stop the app: a banner names what is not configured, and the feature that needs it is disabled.
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── public/ # Public assets
-├── wrangler.jsonc # Cloudflare Workers config
-```
+| Local service             | URL                    |
+| ------------------------- | ---------------------- |
+| Supabase API              | http://127.0.0.1:54321 |
+| Studio (database UI)      | http://127.0.0.1:54323 |
+| Mailpit (captured emails) | http://127.0.0.1:54324 |
 
-## Supabase Configuration
+Email confirmation is off in the local stack (`supabase/config.toml`), so a new account can sign in straight away. Stop the stack with `npx supabase stop`.
 
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
+## Scripts
 
-### First-time setup (local, no cloud project needed)
+| Command                             | What it does                                                  |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `npm run dev`                       | Dev server in Cloudflare's `workerd` runtime                  |
+| `npm run build`                     | Production build                                              |
+| `npm run preview`                   | Serve the production build locally                            |
+| `npm run lint` / `npm run lint:fix` | ESLint with type-checked rules / auto-fix                     |
+| `npm run format`                    | Prettier                                                      |
+| `npm test`                          | Every Vitest suite once                                       |
+| `npx vitest run <file>`             | One test file                                                 |
+| `npm run db:types`                  | Regenerate `src/db/database.types.ts` from the local database |
+| `npm run deploy:preview`            | Build and upload a new Worker version without promoting it    |
+| `npm run deploy:promote`            | Promote an uploaded version to production                     |
+| `npm run deploy:rollback`           | Roll production back to the previous version                  |
 
-Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
+Where a new test goes and how it is written: [`context/foundation/test-plan.md`](context/foundation/test-plan.md) §6.
 
-1. Create your `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-2. Initialize the local Supabase project (creates a `supabase/` config folder):
-
-```bash
-npx supabase init
-```
-
-3. Start the local stack (downloads Docker images on first run):
-
-```bash
-npx supabase start
-```
-
-4. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
+## Project structure
 
 ```
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_KEY=<anon key from CLI output>
+src/
+├── pages/          # routes; pages/api/ holds the JSON endpoints
+├── components/     # React islands by feature (generate, deck, review, account, auth); shadcn/ui in ui/
+├── lib/            # services, validation schemas, helpers
+├── db/             # generated database types
+├── layouts/
+└── middleware.ts   # resolves the session and guards protected routes
+supabase/
+├── config.toml     # local stack
+└── migrations/     # schema, grants and row-level security policies
+context/            # product and engineering documentation (see below)
+wrangler.jsonc      # Cloudflare Worker config
 ```
 
-5. To stop the stack when done:
+## Database
 
-```bash
-npx supabase stop
-```
-
-The local Studio UI is available at `http://localhost:54323`.
-
-No database tables or migrations are required — this project uses Supabase Auth's built-in `auth.users` table only.
-
-### Using a cloud Supabase project instead
-
-If you prefer to use a hosted Supabase project, add these variables to your `.env` and `.dev.vars` files:
-
-| Variable       | Description                                                |
-| -------------- | ---------------------------------------------------------- |
-| `SUPABASE_URL` | Project URL from Supabase dashboard → Settings → API       |
-| `SUPABASE_KEY` | `anon` public key from Supabase dashboard → Settings → API |
-
-```
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_KEY=<anon-key>
-```
-
-### Email confirmation in local development
-
-By default Supabase requires email confirmation before a user can sign in. To skip this during local development:
-
-1. Open the Supabase dashboard for your project
-2. Go to **Authentication → Email → Confirm email**
-3. Toggle it **off**
-
-Users can then sign in immediately after sign-up without clicking a confirmation link.
-
-### Auth routes
-
-| Route                 | Description                                                             |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/auth/signin`        | Email/password sign-in form                                             |
-| `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-
-Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
+- The schema lives in `supabase/migrations/` (six migrations). Every table has row-level security with a separate policy per operation and role, so a user only ever sees their own data.
+- Locally, `npx supabase start` applies the migrations, and `npx supabase db reset` rebuilds the local database from them, wiping its data.
+- In production, migrations are applied by hand with `npx supabase db push`, after a `--dry-run`. Neither CI nor the deploy runs them.
 
 ## Deployment
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
+- **Production:** every merge to `main` is built and deployed by [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/). A docs-only merge deploys too.
+- **Other branches:** Workers Builds only uploads a preview version; production stays as it is.
+- **Secrets:** `SUPABASE_URL`, `SUPABASE_KEY` and `OPENROUTER_API_KEY` are Worker secrets (`npx wrangler secret put <NAME>`). The build needs none of them.
+- **Rollback:** `npm run deploy:rollback` reverts code only, not database migrations and not secret values.
 
-1. Build the project:
-
-```bash
-npm run build
-```
-
-2. Deploy with Wrangler:
-
-```bash
-npx wrangler deploy
-```
-
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+Full runbook: [`context/changes/deployment/deployment-plan.md`](context/changes/deployment/deployment-plan.md).
 
 ## CI
 
-GitHub Actions runs lint + build on every push and PR to `main`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+GitHub Actions (`.github/workflows/ci.yml`) runs `astro sync`, lint, `npm test` and build on every push and pull request to `main`. It needs no secrets and never deploys: it is the gate a change passes before merge.
 
-## License
+## Project documentation
 
-MIT
+| Path                                                                           | What is there                                  |
+| ------------------------------------------------------------------------------ | ---------------------------------------------- |
+| [`context/foundation/prd.md`](context/foundation/prd.md)                       | Product requirements                           |
+| [`context/foundation/roadmap.md`](context/foundation/roadmap.md)               | Milestones and the slices that delivered them  |
+| [`context/foundation/test-plan.md`](context/foundation/test-plan.md)           | Risk-based test strategy and its rollout       |
+| [`context/foundation/tech-stack.md`](context/foundation/tech-stack.md)         | How the stack was chosen                       |
+| [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md) | How the hosting platform was chosen            |
+| [`context/archive/`](context/archive/)                                         | Every shipped change: research, plan, reviews  |
+| [`AGENTS.md`](AGENTS.md)                                                       | Rules for AI coding agents working in the repo |
