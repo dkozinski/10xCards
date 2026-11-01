@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-31
+> Last updated: 2026-11-01
 
 ## 1. Strategy
 
@@ -75,12 +75,12 @@ Each row is a discrete rollout phase that will open its own change folder
 via `/10x-new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
-| #   | Phase name                                       | Goal (one line)                                                                                                         | Risks covered           | Test types                                                       | Status        | Change folder                                   |
-| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------- | ------------- | ----------------------------------------------- |
-| 1   | Generate and save screens under failure          | Prove a bad AI response or failed save never loses the pasted text, locks the screen, fakes success or duplicates cards | #1, #3                  | unit (bad-response fixtures) + component (React, jsdom)          | change opened | context/changes/testing-generate-save-failures/ |
-| 2   | Guardrails on a real database                    | Prove grading, saving and isolation hold on a real local Postgres, not only on mocks; run locally, not in CI            | #2, #3, #4, #6          | integration (local Supabase) + pgTAP                             | not started   | —                                               |
-| 3   | Deck management and privacy                      | Prove deck edits and deletes match the database after errors and pasted text leaks nowhere                              | #5, #7                  | component (reuse Phase 1 pattern) + unit                         | not started   | —                                               |
-| 4   | Critical-path smoke and generation-quality check | Prove the paste → save → review loop works in a browser, and a prompt or model change does not lower card quality       | #1, #2, #3 (end to end) | e2e (one flow, local) + AI-native LLM-as-judge on a fixed corpus | not started   | —                                               |
+| #   | Phase name                                       | Goal (one line)                                                                                                         | Risks covered           | Test types                                                       | Status      | Change folder                                              |
+| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| 1   | Generate and save screens under failure          | Prove a bad AI response or failed save never loses the pasted text, locks the screen, fakes success or duplicates cards | #1, #3                  | unit (bad-response fixtures) + component (React, jsdom)          | complete    | context/archive/2026-10-26-testing-generate-save-failures/ |
+| 2   | Guardrails on a real database                    | Prove grading, saving and isolation hold on a real local Postgres, not only on mocks; run locally, not in CI            | #2, #3, #4, #6          | integration (local Supabase) + pgTAP                             | not started | —                                                          |
+| 3   | Deck management and privacy                      | Prove deck edits and deletes match the database after errors and pasted text leaks nowhere                              | #5, #7                  | component (reuse Phase 1 pattern) + unit                         | not started | —                                                          |
+| 4   | Critical-path smoke and generation-quality check | Prove the paste → save → review loop works in a browser, and a prompt or model change does not lower card quality       | #1, #2, #3 (end to end) | e2e (one flow, local) + AI-native LLM-as-judge on a fixed corpus | not started | —                                                          |
 
 Ordering: Phase 1 first because #1 is the only High × High risk and runs
 in Vitest without a database. Phase 2 answers interview Q4 (mocked
